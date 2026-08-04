@@ -1529,12 +1529,18 @@
     if(data.codeCounters) codeCounters = data.codeCounters;
   }
 
+  let initialSyncDone = false; // rămâne false până citim o dată reală din cloud — blochează scrierile premature
+
   function saveState(){
     const data = collectState();
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
     catch(e){ storageAvailable = false; } // ex. navigare privată, quota depășită etc.
     if(!cloudEnabled){
       console.log("[salvare] doar local — cloud dezactivat.");
+      return;
+    }
+    if(!initialSyncDone){
+      console.log("[salvare] amânată — încă n-am citit prima dată din cloud (evit să suprascriu cu date vechi).");
       return;
     }
     if(suppressSave){
@@ -1568,6 +1574,12 @@
     let firstSync = true;
     cloudRef.on("value", snapshot=>{
       const data = snapshot.val();
+      console.log("[sincronizare] date primite din cloud:",
+        data && data.projects ? data.projects.length + " proiecte" : "(gol)",
+        data);
+      const isFirst = !initialSyncDone;
+      initialSyncDone = true; // de-acum saveState() are voie să scrie normal
+
       if(data){
         suppressSave = true;
         try{
@@ -1578,16 +1590,17 @@
         } finally {
           suppressSave = false; // garantat — altfel rămâne blocat și nu se mai salvează NIMIC
         }
-      } else {
-        saveState(); // nimic în cloud încă — trimite starea curentă ca punct de plecare
+      } else if(isFirst){
+        saveState(); // baza de date era goală la prima citire — trimitem starea inițială, o singură dată
       }
-      if(firstSync){ showToast("Conectat la baza de date"); firstSync = false; }
+      if(isFirst){ showToast("Conectat la baza de date"); }
+      firstSync = false;
     }, err=>{
       console.error("Citire cloud eșuată:", err);
       setSyncBadge("error");
       showToast("Nu s-a putut citi din cloud (" + (err.code || err.message || "eroare necunoscută") + ")");
     });
-    render(); // afișează imediat, cât timp așteptăm primul răspuns din cloud
+    render(); // afișare locală imediată, cât timp așteptăm primul răspuns — NU scrie în cloud (vezi initialSyncDone)
   }
 
   if(cloudEnabled){
