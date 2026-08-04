@@ -1533,13 +1533,22 @@
     const data = collectState();
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
     catch(e){ storageAvailable = false; } // ex. navigare privată, quota depășită etc.
-    if(cloudEnabled && !suppressSave){
-      cloudRef.set(data).catch(e=>{
-        console.error("Salvare cloud eșuată:", e);
-        setSyncBadge("error");
-        showToast("Nu s-a salvat în cloud (" + (e.code || e.message || "eroare necunoscută") + ")");
-      });
+    if(!cloudEnabled){
+      console.log("[salvare] doar local — cloud dezactivat.");
+      return;
     }
+    if(suppressSave){
+      console.log("[salvare] săritĂ — tocmai am primit date din cloud, nu le retrimitem.");
+      return;
+    }
+    console.log("[salvare] trimit spre cloud…");
+    cloudRef.set(data).then(()=>{
+      console.log("[salvare] confirmată de Firebase.");
+    }).catch(e=>{
+      console.error("[salvare] eșuată:", e);
+      setSyncBadge("error");
+      showToast("Nu s-a salvat în cloud (" + (e.code || e.message || "eroare necunoscută") + ")");
+    });
   }
 
   function loadLocal(){
@@ -1561,9 +1570,14 @@
       const data = snapshot.val();
       if(data){
         suppressSave = true;
-        applyState(data);
-        render();
-        suppressSave = false;
+        try{
+          applyState(data);
+          render();
+        } catch(e){
+          console.error("[sincronizare] eroare la aplicarea datelor din cloud:", e);
+        } finally {
+          suppressSave = false; // garantat — altfel rămâne blocat și nu se mai salvează NIMIC
+        }
       } else {
         saveState(); // nimic în cloud încă — trimite starea curentă ca punct de plecare
       }
