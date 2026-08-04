@@ -1534,7 +1534,11 @@
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
     catch(e){ storageAvailable = false; } // ex. navigare privată, quota depășită etc.
     if(cloudEnabled && !suppressSave){
-      cloudRef.set(data).catch(e=>{ console.error("Salvare cloud eșuată:", e); setSyncBadge("error"); });
+      cloudRef.set(data).catch(e=>{
+        console.error("Salvare cloud eșuată:", e);
+        setSyncBadge("error");
+        showToast("Nu s-a salvat în cloud (" + (e.code || e.message || "eroare necunoscută") + ")");
+      });
     }
   }
 
@@ -1547,8 +1551,12 @@
     } catch(e){ return false; }
   }
 
+  let cloudSyncStarted = false;
   function startCloudSync(){
+    if(cloudSyncStarted) return;
+    cloudSyncStarted = true;
     setSyncBadge("on");
+    let firstSync = true;
     cloudRef.on("value", snapshot=>{
       const data = snapshot.val();
       if(data){
@@ -1559,9 +1567,11 @@
       } else {
         saveState(); // nimic în cloud încă — trimite starea curentă ca punct de plecare
       }
+      if(firstSync){ showToast("Conectat la baza de date"); firstSync = false; }
     }, err=>{
       console.error("Citire cloud eșuată:", err);
       setSyncBadge("error");
+      showToast("Nu s-a putut citi din cloud (" + (err.code || err.message || "eroare necunoscută") + ")");
     });
     render(); // afișează imediat, cât timp așteptăm primul răspuns din cloud
   }
@@ -1588,6 +1598,7 @@
         } else {
           document.getElementById("loginOverlay").classList.add("open");
           document.getElementById("btnLogout").style.display = "none";
+          if(cloudSyncStarted){ cloudRef.off("value"); cloudSyncStarted = false; }
         }
       });
     } else {
