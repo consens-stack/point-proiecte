@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
   :root{
     --paper:#FAF8F2;
@@ -43,6 +46,9 @@
   .logo-img{height:44px;width:auto;flex:none;}
   .brand-text .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:0;padding-left:14px;border-left:1px solid var(--line);}
   .head-sub{max-width:400px;color:var(--ink-soft);font-size:14.5px;margin:0;}
+  .sync-badge{display:inline-block;margin-top:6px;font-family:var(--font-mono);font-size:10.5px;padding:2px 8px;border-radius:9px;background:var(--paper-alt);color:var(--ink-faint);}
+  .sync-badge.on{background:var(--status-done-wash);color:var(--status-done);}
+  .sync-badge.error{background:var(--stamp-wash);color:var(--stamp);}
 
   .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;flex-wrap:wrap;}
   .tabs{display:inline-flex;border:1px solid var(--line);border-radius:24px;padding:3px;background:#fff;flex-wrap:wrap;}
@@ -54,6 +60,8 @@
   .btn-new:hover{background:#233d53;}
   .btn-backup{font-family:var(--font-body);font-weight:600;font-size:14px;color:var(--ink-soft);background:#fff;border:1px solid var(--line);padding:11px 18px;border-radius:var(--radius);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;transition:all .15s ease;}
   .btn-backup:hover{border-color:var(--brass);color:var(--brass);}
+  .btn-reset{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:8px 4px;text-decoration:underline;text-underline-offset:2px;}
+  .btn-reset:hover{color:var(--stamp);}
 
   .accordion{border:1px solid var(--line);border-radius:6px;background:#fff;overflow:hidden;}
   .accordion + .accordion{margin-top:14px;}
@@ -271,7 +279,10 @@
         <p class="eyebrow">Gestiune proiecte &amp; clienți</p>
       </div>
     </div>
-    <p class="head-sub">Click dreapta pe un proiect pentru acțiuni, clic pe mijloc pentru portalul clientului, clic pe nume pentru notițe.</p>
+    <p class="head-sub">Click dreapta pe un proiect pentru acțiuni, clic pe mijloc pentru portalul clientului, clic pe nume pentru notițe.
+      <br><span class="sync-badge" id="syncBadge">Doar local</span>
+      <button class="btn-reset" id="btnLogout" style="display:none;">Deconectare</button>
+    </p>
   </div>
 
   <div class="toolbar">
@@ -560,6 +571,27 @@
   </div>
 </div>
 
+<!-- LOGIN OVERLAY (folosit doar dacă REQUIRE_LOGIN = true) -->
+<div class="overlay" id="loginOverlay">
+  <div class="modal modal-small">
+    <div class="modal-head">
+      <div><p class="eyebrow">Acces echipă</p><h2>Autentificare</h2></div>
+    </div>
+    <div class="modal-body">
+      <form id="loginForm">
+        <label class="field-label">Email</label>
+        <input type="email" class="field-input" id="loginEmail" required autocomplete="username">
+        <label class="field-label">Parolă</label>
+        <input type="password" class="field-input" id="loginPassword" required autocomplete="current-password">
+        <p id="loginError" style="color:var(--stamp);font-size:12.5px;margin:10px 0 0;min-height:16px;"></p>
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Intră</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -767,6 +799,8 @@
       }
       flashProjectId = null;
     }
+
+    saveState();
   }
 
   function renderDatalist(){
@@ -1440,8 +1474,138 @@
     toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
   }
 
-  render();
+  /* ---------------- persistență: local + sincronizare cloud opțională ---------------- */
+  // STORAGE_KEY e folosit și ca nume de cheie locală, și ca nod în baza de date cloud.
+  const STORAGE_KEY = "point_proiecte_v1";
+  let storageAvailable = true;
+
+  // ============ CONFIGURARE FIREBASE (opțional) ============
+  // Completează valorile de mai jos cu cele din Firebase Console → Project settings → Your apps → SDK config.
+  // Dacă le lași goale, aplicația funcționează doar local, ca înainte (fără sincronizare între calculatoare).
+  const FIREBASE_CONFIG = {
+    apiKey: "",
+    authDomain: "",
+    databaseURL: "",
+    projectId: "",
+  };
+
+  // Pune true DUPĂ ce ai creat un user în Firebase → Authentication → Email/Password
+  // și ai blocat regulile din Realtime Database (vezi ghidul „locked mode”).
+  const REQUIRE_LOGIN = true;
+
+  let cloudEnabled = false;
+  let cloudRef = null;
+  let suppressSave = false;
+
+  if(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.databaseURL){
+    try{
+      firebase.initializeApp(FIREBASE_CONFIG);
+      cloudRef = firebase.database().ref(STORAGE_KEY);
+      cloudEnabled = true;
+    } catch(e){
+      console.error("Firebase init eșuat:", e);
+      cloudEnabled = false;
+    }
+  }
+
+  function setSyncBadge(state){
+    const el = document.getElementById("syncBadge");
+    if(!el) return;
+    el.classList.remove("on","error");
+    if(state==="on"){ el.textContent = "☁ Sincronizat între calculatoare"; el.classList.add("on"); }
+    else if(state==="error"){ el.textContent = "☁ Eroare de sincronizare — verifică regulile Firebase"; el.classList.add("error"); }
+    else { el.textContent = "Doar local (fără sincronizare — vezi ghidul Firebase)"; }
+  }
+
+  function collectState(){
+    return { clients, projects, manualNotifications, suggestions,
+      nextClientNum, nextProjectId, nextNotifNum, nextSugNum, codeCounters };
+  }
+
+  function applyState(data){
+    if(!data) return;
+    if(data.clients) clients = data.clients;
+    if(data.projects) projects = data.projects;
+    if(data.manualNotifications) manualNotifications = data.manualNotifications;
+    if(data.suggestions) suggestions = data.suggestions;
+    if(data.nextClientNum) nextClientNum = data.nextClientNum;
+    if(data.nextProjectId) nextProjectId = data.nextProjectId;
+    if(data.nextNotifNum) nextNotifNum = data.nextNotifNum;
+    if(data.nextSugNum) nextSugNum = data.nextSugNum;
+    if(data.codeCounters) codeCounters = data.codeCounters;
+  }
+
+  function saveState(){
+    const data = collectState();
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    catch(e){ storageAvailable = false; } // ex. navigare privată, quota depășită etc.
+    if(cloudEnabled && !suppressSave){
+      cloudRef.set(data).catch(e=>{ console.error("Salvare cloud eșuată:", e); setSyncBadge("error"); });
+    }
+  }
+
+  function loadLocal(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return false;
+      applyState(JSON.parse(raw));
+      return true;
+    } catch(e){ return false; }
+  }
+
+  function startCloudSync(){
+    setSyncBadge("on");
+    cloudRef.on("value", snapshot=>{
+      const data = snapshot.val();
+      if(data){
+        suppressSave = true;
+        applyState(data);
+        render();
+        suppressSave = false;
+      } else {
+        saveState(); // nimic în cloud încă — trimite starea curentă ca punct de plecare
+      }
+    }, err=>{
+      console.error("Citire cloud eșuată:", err);
+      setSyncBadge("error");
+    });
+    render(); // afișează imediat, cât timp așteptăm primul răspuns din cloud
+  }
+
+  if(cloudEnabled){
+    if(REQUIRE_LOGIN){
+      const auth = firebase.auth();
+      document.getElementById("loginForm").addEventListener("submit", e=>{
+        e.preventDefault();
+        const email = document.getElementById("loginEmail").value.trim();
+        const pass = document.getElementById("loginPassword").value;
+        const errEl = document.getElementById("loginError");
+        errEl.textContent = "";
+        auth.signInWithEmailAndPassword(email, pass).catch(err=>{
+          errEl.textContent = "Autentificare eșuată — verifică emailul și parola.";
+        });
+      });
+      document.getElementById("btnLogout").addEventListener("click", ()=> auth.signOut());
+      auth.onAuthStateChanged(user=>{
+        if(user){
+          document.getElementById("loginOverlay").classList.remove("open");
+          document.getElementById("btnLogout").style.display = "inline";
+          startCloudSync();
+        } else {
+          document.getElementById("loginOverlay").classList.add("open");
+          document.getElementById("btnLogout").style.display = "none";
+        }
+      });
+    } else {
+      startCloudSync();
+    }
+  } else {
+    setSyncBadge("off");
+    loadLocal();
+    render();
+  }
 </script>
+
 
 </body>
 </html>
