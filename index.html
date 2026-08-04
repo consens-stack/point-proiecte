@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POINT — proiecte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --paper:#FAF8F2;
+    --paper-alt:#F1ECDF;
+    --line:#DBD4BF;
+    --line-soft:#EAE4D2;
+    --ink:#211F1A;
+    --ink-soft:#6E6858;
+    --ink-faint:#A39C87;
+    --blueprint:#2B4A63;
+    --blueprint-soft:#7C93A3;
+    --blueprint-wash:#E7EDF1;
+    --stamp:#8B3A2B;
+    --stamp-wash:#F4E8E2;
+    --brass:#A9843C;
+    --brass-wash:#F3ECDC;
+    --status-done:#3F5C43;
+    --status-done-wash:#E7EEE6;
+    --radius:4px;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'IBM Plex Sans',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:var(--font-body);line-height:1.45;-webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--blueprint-wash);color:var(--blueprint);}
+  :focus-visible{outline:2px solid var(--blueprint);outline-offset:2px;}
+
+  .app{max-width:1200px;margin:0 auto;padding:36px 28px 80px;}
+
+  .head{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:26px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:14px;}
+  .logo-img{height:44px;width:auto;flex:none;}
+  .brand-text .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:0;padding-left:14px;border-left:1px solid var(--line);}
+  .head-sub{max-width:400px;color:var(--ink-soft);font-size:14.5px;margin:0;}
+
+  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;flex-wrap:wrap;}
+  .tabs{display:inline-flex;border:1px solid var(--line);border-radius:24px;padding:3px;background:#fff;flex-wrap:wrap;}
+  .tab-btn{font-family:var(--font-body);font-weight:600;font-size:13.5px;color:var(--ink-soft);background:none;border:none;padding:8px 16px;border-radius:20px;cursor:pointer;transition:all .12s ease;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;}
+  .tab-btn.active{background:var(--blueprint);color:#fff;}
+  .tab-btn .tab-count{font-family:var(--font-mono);font-size:11.5px;opacity:.8;}
+  .toolbar-right{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn-new{font-family:var(--font-body);font-weight:600;font-size:14px;color:#fff;background:var(--blueprint);border:none;padding:11px 18px;border-radius:var(--radius);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;transition:background .15s ease;}
+  .btn-new:hover{background:#233d53;}
+  .btn-backup{font-family:var(--font-body);font-weight:600;font-size:14px;color:var(--ink-soft);background:#fff;border:1px solid var(--line);padding:11px 18px;border-radius:var(--radius);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;transition:all .15s ease;}
+  .btn-backup:hover{border-color:var(--brass);color:var(--brass);}
+
+  .accordion{border:1px solid var(--line);border-radius:6px;background:#fff;overflow:hidden;}
+  .accordion + .accordion{margin-top:14px;}
+  .accordion-header{width:100%;display:flex;align-items:center;gap:9px;padding:13px 16px;border:none;background:var(--paper-alt);font-family:var(--font-display);font-weight:600;font-size:14.5px;color:var(--ink);cursor:pointer;text-align:left;}
+  .accordion-chevron{display:inline-block;transition:transform .15s ease;color:var(--ink-faint);font-size:10px;}
+  .accordion-header.open .accordion-chevron{transform:rotate(90deg);}
+  .accordion-header .count-badge{font-family:var(--font-mono);font-size:12.5px;color:var(--ink-faint);}
+  .accordion-body{padding:14px 16px 16px;}
+  @media (prefers-reduced-motion:reduce){ .accordion-chevron{transition:none;} }
+
+  .notif-list{padding:2px 0 4px;}
+  .notif{display:flex;align-items:flex-start;gap:10px;padding:9px 4px;border-left:3px solid var(--ink-faint);font-size:13.5px;padding-left:12px;margin-bottom:2px;}
+  .notif-info{border-left-color:var(--blueprint-soft);}
+  .notif-warning{border-left-color:var(--brass);}
+  .notif-urgent{border-left-color:var(--stamp);}
+  .sug-imbunatatit{border-left-color:var(--status-done);}
+  .sug-imbunatatit .notif-dot{background:var(--status-done);}
+  .sug-adaugat{border-left-color:var(--blueprint-soft);}
+  .sug-adaugat .notif-dot{background:var(--blueprint-soft);}
+  .sug-modificat{border-left-color:var(--brass);}
+  .sug-modificat .notif-dot{background:var(--brass);}
+  .sug-eliminat{border-left-color:var(--stamp);}
+  .sug-eliminat .notif-dot{background:var(--stamp);}
+  .sug-altceva{border-left-color:var(--ink-faint);}
+  .sug-altceva .notif-dot{background:var(--ink-faint);}
+  .sug-cat{font-weight:600;}
+  .sug-date{color:var(--ink-faint);font-size:11px;}
+  .notif-dot{width:7px;height:7px;border-radius:50%;background:var(--ink-faint);margin-top:6px;flex:none;}
+  .notif-info .notif-dot{background:var(--blueprint-soft);}
+  .notif-warning .notif-dot{background:var(--brass);}
+  .notif-urgent .notif-dot{background:var(--stamp);}
+  .notif-text{flex:1;color:var(--ink);}
+  .notif-chip{font-size:10.5px;padding:2px 8px;}
+  .notif-dismiss{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:12px;padding:2px 4px;flex:none;}
+  .notif-dismiss:hover{color:var(--stamp);}
+  .notif-add{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--line-soft);margin-top:10px;flex-wrap:wrap;}
+  .notif-add input[type="text"]{flex:1;min-width:180px;border:1px solid var(--line);border-radius:var(--radius);padding:8px 10px;font-family:var(--font-body);font-size:13px;background:var(--paper);}
+  .notif-add select{border:1px solid var(--line);border-radius:var(--radius);padding:8px 10px;font-family:var(--font-body);font-size:13px;background:var(--paper);}
+  .notif-empty{padding:6px 2px;color:var(--ink-faint);font-size:13px;font-style:italic;}
+
+  .grid-wrap{border:1px solid var(--line);border-radius:6px;overflow-x:auto;background:#fff;}
+  .grid-wrap.muted{opacity:.72;}
+  table.grid{border-collapse:collapse;width:100%;min-width:1180px;}
+  table.grid thead th{font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);text-align:center;padding:12px 6px;border-bottom:1px solid var(--line);background:var(--paper-alt);position:sticky;top:0;z-index:4;}
+  table.grid thead th.col-num{width:56px;text-align:center;position:sticky;left:0;z-index:6;}
+  table.grid thead th.col-name{text-align:left;padding-left:14px;position:sticky;left:56px;z-index:5;min-width:190px;}
+  table.grid thead th.col-client{min-width:130px;text-align:left;padding-left:10px;}
+  table.grid thead th.col-deadline{min-width:130px;}
+  th.phase-head{min-width:100px;}
+
+  table.grid tbody td{border-bottom:1px solid var(--line-soft);padding:0;text-align:center;vertical-align:middle;}
+  table.grid tbody tr:last-child td{border-bottom:none;}
+  table.grid tbody tr.flash{animation:flash 1.1s ease;}
+  @keyframes flash{0%{background:var(--blueprint-wash);}100%{background:transparent;}}
+  table.grid tbody tr.data-row:hover td{background:var(--paper-alt);}
+  table.grid tbody tr.data-row{cursor:default;}
+
+  td.col-num{color:var(--ink-faint);font-family:var(--font-mono);font-size:11px;width:56px;background:#fff;position:sticky;left:0;z-index:2;border-right:1px solid var(--line-soft);}
+  table.grid tbody td.col-name{text-align:left;padding:0 14px;font-weight:500;background:#fff;position:sticky;left:56px;z-index:1;border-right:1px solid var(--line-soft);min-width:190px;height:56px;}
+  .name-cell{display:flex;align-items:center;gap:6px;cursor:pointer;}
+  .name-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .name-text.name-priority{font-weight:700;}
+  .note-flag{color:var(--brass);font-size:12px;flex:none;}
+  .drive-flag{color:var(--blueprint-soft);font-size:12px;flex:none;text-decoration:none;}
+  .drive-flag:hover{color:var(--blueprint);}
+  .stage-tag{font-family:var(--font-mono);font-size:9.5px;background:var(--paper-alt);color:var(--ink-soft);padding:2px 7px;border-radius:8px;flex:none;white-space:nowrap;border:1px solid var(--line-soft);}
+  .stage-tag.stage-done{background:var(--status-done-wash);color:var(--status-done);border-color:transparent;}
+  .expand-caret{margin-left:auto;color:var(--ink-faint);font-size:10px;flex:none;}
+  table.grid tbody td.col-client{text-align:left;padding:0 14px;min-width:130px;color:var(--ink-soft);font-size:13.5px;}
+
+  td.col-deadline{padding:0 10px;min-width:130px;}
+  .deadline-input{width:100%;border:1.4px dashed var(--line);border-radius:16px;padding:6px 10px;font-family:var(--font-mono);font-size:11.5px;color:var(--ink-soft);background:var(--paper);cursor:pointer;}
+  .deadline-input:focus{outline:none;}
+  .deadline-input.due-warning{border-style:solid;border-color:var(--brass);color:var(--brass);background:var(--brass-wash);}
+  .deadline-input.due-urgent{border-style:solid;border-color:var(--stamp);color:var(--stamp);background:var(--stamp-wash);}
+
+  /* Prioritare: listă scurtă, curată — trunchiem numele ca să încapă toate stadiile fără scroll */
+  #tablePrioritare{table-layout:fixed;width:auto;min-width:0;}
+  #tablePrioritare th.col-num, #tablePrioritare td.col-num{width:56px;}
+  #tablePrioritare th.col-name, #tablePrioritare td.col-name{width:150px;}
+  #tablePrioritare th.col-client, #tablePrioritare td.col-client{width:96px;}
+  #tablePrioritare td.col-client{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #tablePrioritare th.col-deadline, #tablePrioritare td.col-deadline{width:106px;}
+  #tablePrioritare th.phase-head, #tablePrioritare td.phase-cell{width:80px;}
+
+  .phase-cell{height:56px;width:100px;cursor:pointer;position:relative;}
+  .dot{width:20px;height:20px;border-radius:50%;margin:0 auto;border:1.6px solid var(--ink-faint);background:transparent;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;font-weight:600;transition:all .12s ease;}
+  .dot.st-done{border-color:var(--status-done);background:var(--status-done);color:#fff;}
+  .dot.st-na{border-style:dashed;border-color:var(--ink-faint);color:var(--ink-faint);background:var(--paper-alt);}
+
+  tr.notes-row td{background:var(--paper-alt);padding:18px 20px;border-bottom:1px solid var(--line-soft);text-align:left;}
+  .notes-grid{display:flex;gap:26px;flex-wrap:wrap;max-width:860px;}
+  .notes-col{flex:1;min-width:260px;}
+  .row-notes-textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;font-family:var(--font-body);font-size:13.5px;background:#fff;resize:vertical;}
+  .row-notes-textarea:focus{outline:2px solid var(--blueprint);outline-offset:1px;}
+  .notif-card{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:8px;margin-bottom:8px;font-size:13px;}
+  .notif-card:last-child{margin-bottom:0;}
+  .notif-card .icon{font-size:14px;line-height:1.3;flex:none;}
+  .notif-card .txt{flex:1;color:var(--ink);}
+  .notif-card-info{background:var(--blueprint-wash);}
+  .notif-card-warning{background:var(--brass-wash);}
+  .notif-card-urgent{background:var(--stamp-wash);}
+
+  /* context menu */
+  .context-menu{position:fixed;z-index:70;background:var(--paper);border:1px solid var(--line);border-radius:6px;box-shadow:0 14px 34px rgba(33,31,26,.26);min-width:210px;padding:6px;display:none;}
+  .context-menu button{display:block;width:100%;text-align:left;background:none;border:none;padding:9px 12px;border-radius:4px;font-family:var(--font-body);font-size:13.5px;color:var(--ink);cursor:pointer;}
+  .context-menu button:hover{background:var(--blueprint-wash);color:var(--blueprint);}
+  .context-menu button.danger:hover{background:var(--stamp-wash);color:var(--stamp);}
+  .context-menu hr{border:none;border-top:1px solid var(--line-soft);margin:5px 2px;}
+
+  .grid-legend{display:flex;gap:20px;margin-top:14px;font-size:12.5px;color:var(--ink-soft);flex-wrap:wrap;}
+  .grid-legend span{display:inline-flex;align-items:center;gap:7px;}
+  .legend-dot{width:14px;height:14px;border-radius:50%;border:1.6px solid var(--ink-faint);display:inline-block;}
+  .legend-dot.done{border-color:var(--status-done);background:var(--status-done);}
+  .legend-dot.na{border-style:dashed;}
+  .grid-hint{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);margin-top:6px;line-height:1.7;}
+
+  .chip{display:inline-flex;align-items:center;background:var(--blueprint-wash);color:var(--blueprint);font-size:11.5px;padding:4px 9px;border-radius:12px;margin:2px 4px 2px 0;cursor:pointer;border:none;font-family:var(--font-body);}
+  .chip:hover{background:var(--blueprint);color:#fff;}
+  .chip-empty{color:var(--ink-faint);font-size:12px;font-style:italic;}
+  td.editable-cell[contenteditable="true"]{cursor:text;padding:0 12px;}
+  td.editable-cell:focus{background:var(--blueprint-wash);outline:none;}
+  table.grid td.col-projects{text-align:left;padding:8px 12px;}
+  table.grid th.col-projects{text-align:left;padding-left:12px;}
+  table.grid th.col-actions{width:56px;}
+
+  .icon-btn{border:1px solid var(--line);background:#fff;border-radius:var(--radius);width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);transition:border-color .12s ease,color .12s ease;margin:0 auto;}
+  .icon-btn:hover{border-color:var(--blueprint);color:var(--blueprint);}
+  .icon-btn.danger:hover{border-color:var(--stamp);color:var(--stamp);}
+
+  .overlay{position:fixed;inset:0;background:rgba(33,31,26,.42);display:none;align-items:flex-start;justify-content:center;padding:6vh 20px;z-index:50;overflow-y:auto;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--paper);border-radius:8px;max-width:460px;width:100%;box-shadow:0 24px 60px rgba(33,31,26,.28);animation:pop .16s ease;border:1px solid var(--line);}
+  .modal.modal-small{max-width:380px;}
+  @keyframes pop{from{opacity:0;transform:translateY(6px) scale(.98);}to{opacity:1;transform:none;}}
+  .modal-head{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 22px 14px;border-bottom:1px solid var(--line-soft);}
+  .modal-head .eyebrow{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--blueprint-soft);margin:0 0 4px;display:flex;align-items:center;gap:8px;}
+  .modal-head h2{font-family:var(--font-display);font-size:19px;margin:0;font-weight:700;}
+  .badge-finished{font-family:var(--font-mono);font-size:9.5px;background:var(--status-done-wash);color:var(--status-done);padding:2px 7px;border-radius:9px;text-transform:none;letter-spacing:.02em;}
+  .modal-close{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:18px;line-height:1;padding:4px;}
+  .modal-close:hover{color:var(--ink);}
+  .modal-body{padding:20px 22px 22px;}
+  .field-label{display:block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 5px;}
+  .field-label:first-child{margin-top:0;}
+  .field-input{width:100%;border:1px solid var(--line);border-radius:var(--radius);padding:9px 11px;font-family:var(--font-body);font-size:14px;background:#fff;}
+  .field-input:focus{outline:2px solid var(--blueprint);outline-offset:1px;}
+  .field-hint{font-size:11px;color:var(--ink-faint);margin:5px 0 0;}
+
+  .rail{display:flex;justify-content:space-between;margin:6px 0 20px;position:relative;flex-wrap:wrap;gap:10px 0;}
+  .rail::before{content:'';position:absolute;top:7px;left:14px;right:14px;height:1px;background:var(--line);}
+  .rail-step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;position:relative;z-index:1;min-width:56px;}
+  .rail-dot{width:15px;height:15px;border-radius:50%;border:1.6px solid var(--ink-faint);background:var(--paper);}
+  .rail-dot.done{background:var(--status-done);border-color:var(--status-done);}
+  .rail-dot.na{border-style:dashed;background:var(--paper-alt);}
+  .rail-dot.current{background:var(--blueprint);border-color:var(--blueprint);box-shadow:0 0 0 4px var(--blueprint-wash);}
+  .rail-label{font-family:var(--font-mono);font-size:8.5px;letter-spacing:.02em;color:var(--ink-faint);text-align:center;}
+  .rail-label.active{color:var(--blueprint);font-weight:500;}
+
+  .section-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:18px 0 8px;}
+  .docs-row{display:flex;gap:8px;}
+  .doc-card{flex:1;border:1px solid var(--line);border-radius:var(--radius);padding:10px 8px;background:#fff;font-size:11.5px;color:var(--ink-soft);}
+  .doc-card .doc-icon{width:20px;height:20px;margin-bottom:6px;color:var(--blueprint-soft);}
+
+  .decision-card{margin-top:18px;border:1px solid var(--line);border-radius:var(--radius);padding:16px;background:#fff;}
+  .decision-quote{font-style:italic;color:var(--ink);font-size:14.5px;margin:0 0 14px;}
+  .btn-approve{font-family:var(--font-body);font-weight:600;font-size:13.5px;color:#fff;background:var(--stamp);border:none;padding:10px 16px;border-radius:var(--radius);cursor:pointer;}
+  .btn-approve:hover{background:#742f22;}
+  .approved-line{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--status-done);font-weight:500;}
+
+  .stamp-wrap{display:flex;justify-content:center;margin:6px 0 4px;height:0;overflow:visible;}
+  .stamp{opacity:0;transform:scale(1.5) rotate(-14deg);}
+  .stamp.show{animation:stampdown .38s cubic-bezier(.2,1.4,.4,1) forwards;}
+  @keyframes stampdown{0%{opacity:0;transform:scale(1.7) rotate(-18deg);}60%{opacity:1;transform:scale(.94) rotate(-6deg);}100%{opacity:1;transform:scale(1) rotate(-6deg);}}
+  @media (prefers-reduced-motion: reduce){
+    .stamp.show{animation:none;opacity:1;transform:scale(1) rotate(-6deg);}
+    .modal{animation:none;}
+    table.grid tbody tr.flash{animation:none;background:var(--blueprint-wash);}
+  }
+
+  .portal-footnote{margin-top:16px;font-size:11.5px;color:var(--ink-faint);}
+
+  .channel-toggle{display:flex;gap:8px;margin-bottom:16px;}
+  .channel-btn{font-family:var(--font-mono);font-size:12px;padding:7px 13px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;}
+  .channel-btn.active{border-color:var(--blueprint);color:var(--blueprint);background:var(--blueprint-wash);}
+  .msg-preview{border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;background:#fff;font-size:14px;min-height:110px;white-space:pre-wrap;}
+  .msg-preview.whatsapp{background:#F1F7EE;border-color:#D6E6CC;border-radius:12px 12px 12px 2px;}
+  .msg-preview[contenteditable="true"]:focus{outline:2px solid var(--blueprint);outline-offset:2px;}
+  .update-note{font-size:11.5px;color:var(--ink-faint);margin-top:10px;}
+  .modal-actions{display:flex;gap:10px;margin-top:16px;}
+  .btn-secondary{font-family:var(--font-body);font-weight:600;font-size:13.5px;color:var(--blueprint);background:#fff;border:1px solid var(--blueprint);padding:9px 14px;border-radius:var(--radius);cursor:pointer;}
+  .btn-secondary:hover{background:var(--blueprint-wash);}
+  .btn-primary{font-family:var(--font-body);font-weight:600;font-size:13.5px;color:#fff;background:var(--blueprint);border:none;padding:9px 14px;border-radius:var(--radius);cursor:pointer;}
+  .btn-primary:hover{background:#233d53;}
+  .btn-danger{font-family:var(--font-body);font-weight:600;font-size:13.5px;color:#fff;background:var(--stamp);border:none;padding:9px 14px;border-radius:var(--radius);cursor:pointer;}
+  .btn-danger:hover{background:#742f22;}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,12px);background:var(--ink);color:var(--paper);font-size:13.5px;padding:11px 18px;border-radius:6px;opacity:0;pointer-events:none;transition:all .2s ease;z-index:60;}
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+
+  @media (max-width:640px){
+    .app{padding:24px 16px 60px;}
+    .head{align-items:flex-start;}
+    .toolbar{flex-direction:column;align-items:stretch;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="head">
+    <div class="brand">
+      <img class="logo-img" src="data:image/png;base64,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" alt="POINT design & build">
+      <div class="brand-text">
+        <p class="eyebrow">Gestiune proiecte &amp; clienți</p>
+      </div>
+    </div>
+    <p class="head-sub">Click dreapta pe un proiect pentru acțiuni, clic pe mijloc pentru portalul clientului, clic pe nume pentru notițe.</p>
+  </div>
+
+  <div class="toolbar">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="notificari">Notificări <span class="tab-count" id="tabCountNotif"></span></button>
+      <button class="tab-btn" data-tab="prioritare">Prioritare <span class="tab-count" id="tabCountPrio"></span></button>
+      <button class="tab-btn" data-tab="toate">Toate proiectele <span class="tab-count" id="tabCountToate"></span></button>
+      <button class="tab-btn" data-tab="clienti">Clienți</button>
+      <button class="tab-btn" data-tab="sugestii">Sugestii <span class="tab-count" id="tabCountSug"></span></button>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn-backup" id="btnBackup">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6.5L7 9.5l3-3M2 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back-up (.xlsx)
+      </button>
+      <button class="btn-new" id="btnAdd">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1V12M1 6.5H12" stroke="white" stroke-width="1.6"/></svg>
+        <span id="btnAddLabel">Proiect nou</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== NOTIFICĂRI ===== -->
+  <div id="viewNotificari">
+    <div class="accordion">
+      <button class="accordion-header open" id="notifAccHeader">
+        <span class="accordion-chevron">▸</span>
+        <span>Notificări importante</span>
+        <span class="count-badge" id="notifCountBadge">(0)</span>
+      </button>
+      <div class="accordion-body" id="notifAccBody">
+        <div class="notif-list" id="notifList"></div>
+        <div class="notif-add">
+          <input type="text" id="notifInput" placeholder="Adaugă o notificare (ex: colaborator plecat în concediu, ANCPI nu răspunde…)">
+          <select id="notifProject"><option value="">— fără proiect —</option></select>
+          <select id="notifSeverity">
+            <option value="info">Info</option>
+            <option value="warning" selected>Atenție</option>
+            <option value="urgent">Urgent</option>
+          </select>
+          <button class="btn-secondary" id="btnAddNotif">Adaugă</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PRIORITARE ===== -->
+  <div id="viewPrioritare" style="display:none;">
+    <div class="grid-wrap" id="prioritareWrap">
+      <table class="grid" id="tablePrioritare"></table>
+    </div>
+    <p class="grid-hint" id="prioritareEmptyHint" style="display:none;">
+      Niciun proiect marcat ca prioritar încă. Click dreapta pe un proiect din „Toate proiectele" și alege „★ Adaugă la prioritare".
+    </p>
+  </div>
+
+  <!-- ===== TOATE PROIECTELE ===== -->
+  <div id="viewToate" style="display:none;">
+    <div class="grid-wrap"><table class="grid" id="tableToate"></table></div>
+
+    <div class="accordion" id="finishedWrap" style="display:none;margin-top:20px;">
+      <button class="accordion-header" id="finishedAccHeader">
+        <span class="accordion-chevron">▸</span>
+        <span>Proiecte terminate</span>
+        <span class="count-badge" id="finishedCountBadge">(0)</span>
+      </button>
+      <div class="accordion-body" id="finishedAccBody" style="display:none;">
+        <div class="grid-wrap muted"><table class="grid" id="tableFinished"></table></div>
+      </div>
+    </div>
+
+    <div class="grid-legend">
+      <span><span class="legend-dot"></span> Neînceput</span>
+      <span><span class="legend-dot done"></span> Finalizată</span>
+      <span><span class="legend-dot na"></span> Nu se aplică</span>
+    </div>
+    <p class="grid-hint">
+      Click pe cerc: schimbă starea fazei. Click pe nume: extinde rândul cu notițele proiectului.
+      Click dreapta: editează, portal client, actualizare, prioritate, ștergere. Click pe mijloc (scroll): deschide direct portalul clientului.
+    </p>
+  </div>
+
+  <!-- ===== CLIENȚI ===== -->
+  <div id="viewClienti" style="display:none;">
+    <div class="grid-wrap">
+      <table class="grid" id="tableClients">
+        <thead>
+          <tr>
+            <th class="col-num">Nr.</th>
+            <th class="col-name">Client</th>
+            <th class="col-client">Telefon</th>
+            <th class="col-client">Email</th>
+            <th class="col-projects">Proiecte</th>
+          </tr>
+        </thead>
+        <tbody id="clientsBody"></tbody>
+      </table>
+    </div>
+    <p class="grid-hint">Click dreapta pe un client: editează sau șterge. Click pe un proiect din listă te duce direct la el. Un client nou apare automat aici dacă îi scrii numele la „Editează proiect".</p>
+  </div>
+
+  <!-- CLIENT CONTEXT MENU -->
+  <div class="context-menu" id="clientContextMenu">
+    <button data-action="editclient">Editează client</button>
+    <hr>
+    <button data-action="deleteclient" class="danger">Șterge client</button>
+  </div>
+
+  <!-- EDIT CLIENT MODAL -->
+  <div class="overlay" id="editClientOverlay">
+    <div class="modal modal-small">
+      <div class="modal-head">
+        <div><p class="eyebrow">Editează client</p><h2>Detalii</h2></div>
+        <button class="modal-close" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="field-label">Nume</label>
+        <input type="text" class="field-input" id="editClientName">
+        <label class="field-label">Telefon</label>
+        <input type="text" class="field-input" id="editClientPhone">
+        <label class="field-label">Email</label>
+        <input type="text" class="field-input" id="editClientEmail">
+        <div class="modal-actions">
+          <button class="btn-secondary" data-close>Anulează</button>
+          <button class="btn-primary" id="editClientSave">Salvează</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SUGESTII ===== -->
+  <div id="viewSugestii" style="display:none;">
+    <div class="accordion">
+      <button class="accordion-header open" id="sugAccHeader">
+        <span class="accordion-chevron">▸</span>
+        <span>Feedback din utilizare</span>
+        <span class="count-badge" id="sugCountBadge">(0)</span>
+      </button>
+      <div class="accordion-body" id="sugAccBody">
+        <div class="notif-list" id="sugList"></div>
+        <div class="notif-add">
+          <input type="text" id="sugInput" placeholder="Ce ai vrea îmbunătățit, adăugat, modificat sau eliminat?">
+          <select id="sugCategory">
+            <option value="imbunatatit">Îmbunătățit</option>
+            <option value="adaugat">Adăugat</option>
+            <option value="modificat" selected>Modificat</option>
+            <option value="eliminat">Eliminat</option>
+            <option value="altceva">Altceva</option>
+          </select>
+          <button class="btn-secondary" id="btnAddSug">Adaugă</button>
+        </div>
+      </div>
+    </div>
+    <p class="grid-hint">Un loc rapid să notezi ce vrei să schimbi data viitoare când lucrezi la aplicație — nu se trimite nicăieri, rămâne doar aici.</p>
+  </div>
+
+</div>
+
+<datalist id="clientsDatalist"></datalist>
+
+<!-- CONTEXT MENU -->
+<div class="context-menu" id="contextMenu">
+  <button data-action="edit">Editează proiect</button>
+  <button data-action="portal">Portal client</button>
+  <button data-action="update">Actualizare automată</button>
+  <button data-action="drive" id="ctxDriveBtn" style="display:none;">Deschide folder Drive</button>
+  <hr>
+  <button data-action="priority" id="ctxPriorityBtn">★ Adaugă la prioritare</button>
+  <hr>
+  <button data-action="delete" class="danger">Șterge proiect</button>
+</div>
+
+<!-- EDIT PROJECT MODAL -->
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div><p class="eyebrow">Editează proiect</p><h2>Detalii</h2></div>
+      <button class="modal-close" data-close>✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="field-label">Cod proiect</label>
+      <input type="text" class="field-input" id="editCode">
+      <p class="field-hint">Implicit: an-număr curent. Poți folosi orice format preferi (ex. inițiale client + an).</p>
+
+      <label class="field-label">Nume proiect</label>
+      <input type="text" class="field-input" id="editName">
+
+      <label class="field-label">Client</label>
+      <input type="text" class="field-input" id="editClient" list="clientsDatalist">
+
+      <label class="field-label">Termen</label>
+      <input type="date" class="field-input" id="editDeadline">
+
+      <label class="field-label">Link folder Drive</label>
+      <input type="text" class="field-input" id="editDriveLink" placeholder="https://drive.google.com/…">
+
+      <div class="modal-actions">
+        <button class="btn-secondary" data-close>Anulează</button>
+        <button class="btn-primary" id="editSave">Salvează</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT PORTAL MODAL -->
+<div class="overlay" id="portalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <p class="eyebrow">Portal client — fără cont, fără parolă <span class="badge-finished" id="portalFinishedBadge" style="display:none;">finalizat</span></p>
+        <h2 id="portalTitle">Proiect</h2>
+      </div>
+      <button class="modal-close" data-close>✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="rail" id="portalRail"></div>
+
+      <p class="section-label">Documente recente</p>
+      <div class="docs-row">
+        <div class="doc-card">
+          <svg class="doc-icon" viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="16" rx="1" stroke="currentColor"/><path d="M6 6h8M6 9.5h8M6 13h5" stroke="currentColor"/></svg>
+          Plan de fațadă — v2
+        </div>
+        <div class="doc-card">
+          <svg class="doc-icon" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="1" stroke="currentColor"/><circle cx="7" cy="9" r="1.6" stroke="currentColor"/><path d="M3 15l4.5-4 3 3 3.5-4.5 4 5.5" stroke="currentColor"/></svg>
+          Foto șantier — sud
+        </div>
+        <div class="doc-card">
+          <svg class="doc-icon" viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="16" rx="1" stroke="currentColor"/><path d="M6 6h8M6 9.5h8M6 13h5" stroke="currentColor"/></svg>
+          Deviz estimativ
+        </div>
+      </div>
+
+      <div class="decision-card" id="decisionCard">
+        <p class="section-label" style="margin-top:0;">Decizie în așteptare</p>
+        <p class="decision-quote" id="decisionText">"Aprob varianta 2 de fațadă, cu tencuială deschisă la culoare."</p>
+        <button class="btn-approve" id="btnApprove">Aprob</button>
+        <div class="stamp-wrap">
+          <svg class="stamp" id="stampSvg" width="108" height="108" viewBox="0 0 108 108">
+            <circle cx="54" cy="54" r="48" fill="none" stroke="#8B3A2B" stroke-width="2.4"/>
+            <circle cx="54" cy="54" r="40" fill="none" stroke="#8B3A2B" stroke-width="1"/>
+            <text x="54" y="50" text-anchor="middle" fill="#8B3A2B" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="700" letter-spacing="1">APROBAT</text>
+            <text x="54" y="66" text-anchor="middle" fill="#8B3A2B" font-family="IBM Plex Mono, monospace" font-size="8" id="stampDate">00.00.0000</text>
+          </svg>
+        </div>
+      </div>
+
+      <p class="portal-footnote">Acest link e unic pentru tine. Nu ai nevoie de cont sau parolă ca să vezi stadiul proiectului.</p>
+    </div>
+  </div>
+</div>
+
+<!-- AUTO UPDATE MODAL -->
+<div class="overlay" id="updateOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div><p class="eyebrow">Actualizare automată</p><h2 id="updateTitle">Proiect</h2></div>
+      <button class="modal-close" data-close>✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="channel-toggle">
+        <button class="channel-btn active" data-channel="whatsapp">WhatsApp</button>
+        <button class="channel-btn" data-channel="email">Email</button>
+      </div>
+      <div class="msg-preview whatsapp" id="msgPreview" contenteditable="true"></div>
+      <p class="update-note">Generată automat din ultima schimbare de fază. Poți edita textul înainte de trimitere.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="btnCopy">Copiază</button>
+        <button class="btn-primary" id="btnSend">Trimite</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal modal-small">
+    <div class="modal-head"><div><p class="eyebrow">Confirmare</p><h2>Sigur?</h2></div><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body">
+      <p id="confirmMessage" style="margin:0 0 18px;font-size:14.5px;"></p>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="confirmNo">Nu</button>
+        <button class="btn-danger" id="confirmYes">Da, șterge</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ---------------- data ---------------- */
+  const phases = [
+    {id:"ph1", name:"Ofertare"},
+    {id:"ph2", name:"Concept"},
+    {id:"ph3", name:"Lucru planșe"},
+    {id:"ph4", name:"Confirmare client"},
+    {id:"ph5", name:"Specialități"},
+    {id:"ph6", name:"Integrare"},
+    {id:"ph7", name:"Print"},
+    {id:"ph8", name:"Predare"},
+  ];
+
+  let clients = [
+    {id:"c1", name:"COMUNA DRAGOMIRESTI", phone:"0758 602196", email:""},
+    {id:"c2", name:"NOBLESSE EDEN", phone:"", email:""},
+    {id:"c3", name:"REGATUN ANDREI-NICOLAE", phone:"", email:""},
+    {id:"c4", name:"ABALAŞEI IOANA DIANA", phone:"", email:""},
+    {id:"c5", name:"IRIMIA CRISTINA MARIA", phone:"", email:""},
+    {id:"c6", name:"TARALUNGA ION", phone:"", email:""},
+    {id:"c7", name:"MABIS ALL", phone:"", email:""},
+    {id:"c8", name:"BLAJ PETRU", phone:"", email:""},
+    {id:"c9", name:"MURĂRIȚA EDUARD", phone:"0740 542988", email:""},
+    {id:"c10", name:"Parohia Sf. Gheorghe", phone:"0743 178667", email:""},
+    {id:"c11", name:"BÂRSAN LUIGI", phone:"0785 875432", email:""},
+    {id:"c12", name:"COMUNA HORIA", phone:"", email:""},
+    {id:"c13", name:"GABOR IOSIF", phone:"353 86 201 9774", email:""},
+    {id:"c14", name:"MANGALAGIU MARIAN", phone:"0766 344467", email:""},
+    {id:"c15", name:"RUSU SABINA-ELENA", phone:"", email:""},
+    {id:"c16", name:"SC SMIRODAVA SA", phone:"0729 292303", email:""},
+    {id:"c17", name:"PETRISOR IRIMIA ANTON", phone:"", email:""},
+    {id:"c18", name:"TUDOR BLOC SRL", phone:"", email:""},
+    {id:"c19", name:"ROLENA", phone:"", email:""},
+    {id:"c20", name:"EXIM SRL", phone:"", email:""},
+  ];
+  let nextClientNum = 21;
+
+  function addDays(n){
+    const d = new Date();
+    d.setDate(d.getDate()+n);
+    return d.toISOString().slice(0,10);
+  }
+
+  // Codul de proiect e un șir liber (ex. nr. contract/nr. OAR, ca "425/225"), nu un index de rând.
+  // La import am preluat codurile din contracte; pentru proiecte noi generăm implicit an-scurt + secvență,
+  // dar codul poate fi rescris oricând din "Editează proiect".
+  let codeCounters = {"26": 0};
+  function nextProjectCode(){
+    const yy = String(new Date().getFullYear()).slice(-2);
+    codeCounters[yy] = (codeCounters[yy]||0) + 1;
+    return `${yy}-${String(codeCounters[yy]).padStart(3,"0")}`;
+  }
+
+  let projects = [
+  {id:1, code:"433/232", name:"DEMOLARE CLĂDIRE C1- STAŢIONAR, în sat Dragomireşti", clientId:"c1", deadline:null, driveLink:"", notes:"Achiziție: ATRIBUIRE DIRECTĂ · Durată contract: 90 zile", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:2, code:"432/231", name:"SERVICII DE PROIECTARE", clientId:"c2", deadline:null, driveLink:"https://docs.google.com/document/d/1ERRJiN0gAAiOgL5FU5L4F6oEw3muAJ2h/edit?usp=drive_link&ouid=114577384948755491815&rtpof=true&sd=true", notes:"", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:3, code:"430/229", name:"CONSTRUIRE LOCUINTĂ D+P+1, ÎMPREJMUIRE ȘI RACORDURI UTILITĂȚI", clientId:"c3", deadline:null, driveLink:"", notes:"Achiziție: RECOMANDARE", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:4, code:"429/228", name:"PROIECTARE DTAC+EXECUȚIE LOCUINȚĂ PARTER+MANSARDĂ", clientId:"c4", deadline:null, driveLink:"", notes:"Durată contract: 5 luni", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:5, code:"428/227", name:"DTAC REZISTENȚĂ LOCUINȚĂ PARTER CORDUN", clientId:"c5", deadline:null, driveLink:"", notes:"", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:6, code:"427/226", name:"DTAD, DTAC+PTh REZISTENȚĂ LOCUINȚĂ CUPLATĂ D+P+E+M ȘI ÎMPREJMUIRE LA STRADĂ", clientId:"c6", deadline:null, driveLink:"", notes:"Adresă: Mun. Roman, Str. Walter Mărăcineanu, nr. 3 și 5 · Durată contract: 3 luni", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:7, code:"426/230", name:"Hală", clientId:"c7", deadline:null, driveLink:"", notes:"Achiziție: CLIENT FIDEL\n\nDin situația proiecte (transcris, potrivire după client MABIS ALL — verifică):\nHala Mabiss All\n• DTAC (arhitectură, rezistență – ocupă Alex, instalații – Enea, trebuie DWG modificat) + DTOE\n• Mediu – obținut\n• DSP – depus\n• Topo – Costel, când scapă de alte probleme\n• Geo – folosim cel vechi\n• Acord vecin (împrejmuirea dintre proprietăți)\n• Verificări", priority:true,
+    status:{ph1:"done",ph2:"done",ph3:"done",ph4:"done",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph4", value:"done"}, approved:false},
+  {id:8, code:"425/225", name:"DESFIINȚARE CONSTRUCȚII EXISTENTE, CONSTRUIRE LOCUINȚĂ PARTER ȘI MANSARDĂ", clientId:"c8", deadline:null, driveLink:"https://drive.google.com/drive/folders/1F9QcbnROQ0wAudVQ1bPImkNnlsB5n6zi?usp=drive_link", notes:"Adresă: Str. Lalelei, nr. 6, sat Rediu, comuna Bâra, jud. Neamț · Durată contract: 3 luni\n\nDin situația proiecte (transcris, potrivire după client Blaj + comuna Bâra — verifică):\nBlaj Bâra – depus pentru CU – 12.09", priority:true,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:9, code:"417/220", name:"CONSTRUIRE LOCUINȚĂ", clientId:"c9", deadline:null, driveLink:"", notes:"Adresă: Roman, str. Vasile Lupu · Achiziție: CLIENT FIDEL", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:10, code:"410/219", name:"DESFIINȚARE CORP C3, C5, MODIFICARE CORP C4, CONSTRUIRE CORP P+M, AMENAJARE CURTE ȘI CONSTRUIRE PARCARE NEACOPERITĂ", clientId:"c10", deadline:null, driveLink:"", notes:"Adresă: str. Soldat Porojan, nr. 7 · Reprezentant: Bogdan Gherasimescu · Achiziție: CLIENT FIDEL\n\nDin situația proiecte (transcris):\n219 - Parohia Sf. Gheorghe\n• P.U.D. – Timotei contactat 10.02.2026\n• Aviz arhitect șef\n• Aviz geotehnic preliminar\n• Mediu\n• Cultură\n• CJ Neamț\n• Topo\n• Expertiză tehnică\n• Studiu geo – dat Divile 10.02.2026\n• DSP\n• ISU\n• Comisia de circulație\n• Apavital\n• Energie\n• Gaz\n• Orange\n• Rossal\n• DTAC + DTAD + DTOE", priority:true,
+    status:{ph1:"done",ph2:"done",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph2", value:"done"}, approved:false},
+  {id:11, code:"409/218", name:"CONSTRUIRE LOCUINȚĂ PARTER", clientId:"c11", deadline:null, driveLink:"", notes:"Adresă: Roman · Inginer: Divile · Achiziție: CLIENT FIDEL", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:12, code:"408/213", name:"DTAC, PTh + execuție construire trotuare Str. Secerii, Eroilor, Reconstrucției, Florilor, Simion Bărnuțiu", clientId:"c12", deadline:null, driveLink:"", notes:"Adresă: Horia · Achiziție: ATRIBUIRE DIRECTĂ · Durată contract: 13 luni", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:13, code:"407/217", name:"CASĂ, GARAJ, ÎMPREJMUIRE, BRANȘAMENT", clientId:"c13", deadline:null, driveLink:"", notes:"Adresă: Luțca · Inginer: Modulus · Achiziție: RECOMANDARE\n\nDin situația proiecte (transcris):\n217 - Gabor Iosif\n• De depus pentru AC!", priority:true,
+    status:{ph1:"done",ph2:"done",ph3:"done",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph3", value:"done"}, approved:false},
+  {id:14, code:"405/216", name:"CONSTRUIRE LOCUINȚĂ", clientId:"c14", deadline:null, driveLink:"", notes:"Adresă: Moldovei · Inginer: Divile · Achiziție: CLIENT FIDEL", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:15, code:"404", name:"SERVICIU DE PROIECTARE DTAC ȘCOALA HLĂPEȘTI", clientId:"c1", deadline:null, driveLink:"", notes:"Adresă: Dragomirești · Reprezentant: Ion Ioniță · Achiziție: ATRIBUIRE DIRECTĂ", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:16, code:"399/213", name:"SF construire trotuare Str. Secerii, Eroilor, Reconstrucției, Florilor, Simion Bărnuțiu", clientId:"c12", deadline:null, driveLink:"", notes:"Adresă: Horia · Inginer: Bichir · Achiziție: ATRIBUIRE DIRECTĂ · Durată contract: 1 lună", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:17, code:"395/212", name:"CONSTRUIRE LOCUINȚĂ PARTER, GARAJ SUBSOL+PARTER, ÎMPREJMUIRE ȘI BRANȘAMENT LA UTILITĂȚI", clientId:"c15", deadline:null, driveLink:"https://drive.google.com/drive/folders/1LUbO1qxeLvxs5f_rKgJtAj7QyBSImiYl?usp=sharing", notes:"Adresă: Podu Iloaiei · Inginer: Divile · Achiziție: RECOMANDARE", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:18, code:"394", name:"AMENAJARE INTERIOARĂ BIROURI CLĂDIRE EXISTENTĂ", clientId:"c16", deadline:null, driveLink:"", notes:"Adresă: Roman, str. Republicii · Reprezentant: Sorin Chiriac · Achiziție: CLIENT FIDEL · Durată contract: 1 lună\n\nDin situația proiecte (transcris, potrivire aproximativă după client — verifică):\n208 - Smirodava - ușă chinezească\n• Depus AC – 26.09", priority:true,
+    status:{ph1:"done",ph2:"done",ph3:"done",ph4:"done",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph4", value:"done"}, approved:false},
+  {id:19, code:"393/211", name:"SERVICIU DE PROIECTARE DALI ȘCOALA HLĂPEȘTI", clientId:"c1", deadline:null, driveLink:"", notes:"Adresă: Dragomirești · Inginer: Puiu Daniel · Achiziție: ATRIBUIRE DIRECTĂ · Durată contract: 3 luni", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:20, code:"391/210", name:"Întocmire documentație „Schimbare destinație din sediu firmă în sediu administrativ-primărie”", clientId:"c12", deadline:null, driveLink:"", notes:"Adresă: Horia · Achiziție: CLIENT FIDEL", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:21, code:"390/209", name:"Autorizare compartimentări interioare etaj 1 și 2 clădire existentă", clientId:"c16", deadline:null, driveLink:"", notes:"Adresă: Roman, str. Republicii · Reprezentant: Sorin Chiriac · Achiziție: CLIENT FIDEL\n\nDin situația proiecte (transcris):\n209 - Smirodava - recompartimentare interioară și firmă luminoasă\n• ISU – de verificat\n• Deviz – de făcut\n• Topo – OK\n• Rossal – OK\n• Verificare – în curs", priority:true,
+    status:{ph1:"done",ph2:"done",ph3:"done",ph4:"done",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph4", value:"done"}, approved:false},
+  {id:22, code:"389/207", name:"RECONVERSIE CLĂDIRE EXISTENTĂ PE STRADA ALBA IULIA ÎN ROMAN", clientId:"c17", deadline:null, driveLink:"", notes:"Adresă: Roman · Achiziție: RECOMANDARE", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:23, code:"368/192", name:"Acces hală producție, demolare parțială construcție existentă, amenajare parcare acces", clientId:"c18", deadline:null, driveLink:"", notes:"Achiziție: RECOMANDARE · Durată contract: 90 zile\n\nDin situația proiecte (transcris):\n192 - Bloc Tudor\n• Obținut CU nou\n• De corelat expertiza cu CU (dacă e nevoie)\n• De corelat partea desenată cu CU (dacă e nevoie) — pt. DTAD avem corpurile C4, C5, C7, C8; în partea desenată apare doar C4\n• ISU — de lămurit cu Negura situația existentă; ofertă scenariu; comunicare preț beneficiar\n• Studiul geo\n• Obținere avize: mediu, apavital, energie, gaz, Orange, Rossal (are datorii Caremil — probleme cu ridicarea avizului), impozit primărie 46.000 RON\n• Rezistență: ofertă Puiu — DTAC 5.500 RON (livrare 2 săpt.), PTh/DE 11.000 RON (livrare 1 lună)\n• Instalații — dacă e cazul\n• De stabilit o valoare de deviz\n• Dovadă OAR\n• Fiscal cu valori de impozitare pt. DTAD\n• Fișă tehnologică DTAD\n(Se întocmește o documentație ce cuprinde DTAC+DTAD)", priority:true,
+    status:{ph1:"done",ph2:"done",ph3:"done",ph4:"done",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph4", value:"done"}, approved:false},
+  {id:24, code:"360/187", name:"PROIECTARE TEREN MULTIFUNCȚIONAL DE SPORT ÎN COMUNA ONICENI, JUDEȚUL NEAMȚ", clientId:"c19", deadline:null, driveLink:"", notes:"Achiziție: RECOMANDARE", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+  {id:25, code:"293", name:"SERVICII DE PROIECTARE ÎNTRARE ÎN LEGALITATE ȘI SCHIMBARE DE DESTINAȚIE CONSTR. EXISTENTĂ", clientId:"c20", deadline:null, driveLink:"", notes:"Adresă: Roman, str. Petru Rareș nr. 40-42, jud. Neamț · Durată contract: 14 zile", priority:false,
+    status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
+];
+  let nextProjectId = 26;
+
+  let manualNotifications = [
+    {id:"n1", severity:"warning", text:"Rossal are datorii la Caremil — probleme cu ridicarea avizului.", projectId:23},
+    {id:"n2", severity:"info", text:"Topo în așteptare — Costel, când scapă de alte probleme.", projectId:7},
+  ];
+  let nextNotifNum = 3;
+
+  let activeTab = "notificari";
+  let activePortalId = null;
+  let activeUpdateId = null;
+  let editingProjectId = null;
+  let activeChannel = "whatsapp";
+  let flashProjectId = null;
+  let pendingConfirm = null;
+  let contextProjectId = null;
+  let expandedNotes = new Set();
+  let currentNotifs = [];
+
+  let suggestions = [];
+  let nextSugNum = 1;
+
+  let notifAccOpen = true;
+  let finishedAccOpen = false;
+  let sugAccOpen = true;
+
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------------- helpers ---------------- */
+  function client(id){ return clients.find(c=>c.id===id) || null; }
+  function project(id){ return projects.find(p=>p.id===id) || null; }
+  function isFinished(p){ return phases.every(ph => p.status[ph.id] && p.status[ph.id]!=="empty"); }
+  function nextStatus(s){ return s==="empty" ? "done" : s==="done" ? "na" : "empty"; }
+  function todayStr(){
+    const d = new Date();
+    return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear();
+  }
+  function fmtDate(iso){
+    if(!iso) return "";
+    const [y,m,d] = iso.split("-");
+    return `${d}.${m}.${y}`;
+  }
+  function daysUntil(iso){
+    const now = new Date(); now.setHours(0,0,0,0);
+    const d = new Date(iso+"T00:00:00");
+    return Math.round((d-now)/86400000);
+  }
+  function deadlineUrgency(iso){
+    if(!iso) return "";
+    const days = daysUntil(iso);
+    if(days < 0) return "due-urgent";
+    if(days <= 7) return "due-warning";
+    return "";
+  }
+  function resolveClientByName(name){
+    name = name.trim();
+    if(!name) return null;
+    const existing = clients.find(c=>c.name.toLowerCase()===name.toLowerCase());
+    if(existing) return existing.id;
+    const nc = {id:"c"+(nextClientNum++), name, phone:"", email:""};
+    clients.push(nc);
+    return nc.id;
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+  }
+  function truncate(s, max=15){
+    s = String(s);
+    return s.length > max ? s.slice(0, max).trimEnd() + "…" : s;
+  }
+
+  /* ---------------- render dispatch ---------------- */
+  function render(){
+    ["notificari","prioritare","toate","clienti","sugestii"].forEach(t=>{
+      document.getElementById("view"+t.charAt(0).toUpperCase()+t.slice(1)).style.display = (activeTab===t) ? "" : "none";
+    });
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===activeTab));
+    document.getElementById("btnAddLabel").textContent = activeTab==="clienti" ? "Client nou" : "Proiect nou";
+    document.getElementById("btnAdd").style.display = (activeTab==="notificari" || activeTab==="sugestii") ? "none" : "inline-flex";
+
+    renderDatalist();
+    renderNotifProjectOptions();
+    renderNotifications();
+    renderPrioritare();
+    renderToate();
+    renderClienti();
+    renderSuggestions();
+
+    document.getElementById("tabCountPrio").textContent = "("+projects.filter(p=>p.priority).length+")";
+    document.getElementById("tabCountToate").textContent = "("+projects.length+")";
+
+    if(flashProjectId){
+      const row = document.getElementById("row-"+flashProjectId);
+      if(row){
+        row.classList.add("flash");
+        row.scrollIntoView({behavior: prefersReducedMotion ? "auto" : "smooth", block:"center"});
+        setTimeout(()=>row.classList.remove("flash"), 1150);
+      }
+      flashProjectId = null;
+    }
+  }
+
+  function renderDatalist(){
+    document.getElementById("clientsDatalist").innerHTML = clients.map(c=>`<option value="${escapeHtml(c.name)}">`).join("");
+  }
+  function renderNotifProjectOptions(){
+    const sel = document.getElementById("notifProject");
+    const current = sel.value;
+    sel.innerHTML = `<option value="">— fără proiect —</option>` +
+      projects.map(p=>`<option value="${p.id}">${escapeHtml(p.code)} — ${escapeHtml(p.name)}</option>`).join("");
+    if(projects.some(p=>String(p.id)===current)) sel.value = current;
+  }
+
+  /* ---------------- notifications ---------------- */
+  function computeAutoNotifications(){
+    const out = [];
+    projects.forEach(p=>{
+      if(!p.deadline) return;
+      const days = daysUntil(p.deadline);
+      if(days < 0){
+        out.push({severity:"urgent", text:`Termen depășit pentru „${p.name}” — cu ${Math.abs(days)} ${Math.abs(days)===1?"zi":"zile"}.`, projectId:p.id, dismissId:null});
+      } else if(days <= 7){
+        out.push({severity: days<=2 ? "urgent" : "warning", text:`Termen pentru „${p.name}” expiră în ${days} ${days===1?"zi":"zile"}.`, projectId:p.id, dismissId:null});
+      }
+    });
+    return out;
+  }
+
+  function currentStageLabel(p){
+    const firstEmpty = phases.find(ph => (p.status[ph.id]||"empty")==="empty");
+    return firstEmpty ? firstEmpty.name : "✓";
+  }
+  function severityIcon(sev){ return sev==="urgent" ? "⚠" : sev==="warning" ? "⏳" : "ℹ"; }
+  function notifCardHtml(n){
+    return `<div class="notif-card notif-card-${n.severity}">
+      <span class="icon">${severityIcon(n.severity)}</span>
+      <span class="txt">${escapeHtml(n.text)}</span>
+      ${n.dismissId ? `<button class="notif-dismiss" data-dismiss="${n.dismissId}" title="Închide">✕</button>` : ""}
+    </div>`;
+  }
+  function notifLineHtml(n, showGoto){
+    const proj = n.projectId ? project(n.projectId) : null;
+    return `<div class="notif notif-${n.severity}">
+      <span class="notif-dot"></span>
+      <span class="notif-text">${escapeHtml(n.text)}</span>
+      ${showGoto && proj ? `<button class="chip notif-chip" data-goto="${proj.id}">${escapeHtml(proj.code)}</button>` : ""}
+      ${n.dismissId ? `<button class="notif-dismiss" data-dismiss="${n.dismissId}" title="Închide">✕</button>` : ""}
+    </div>`;
+  }
+
+  function renderNotifications(){
+    const auto = computeAutoNotifications();
+    const manual = manualNotifications.map(n=>({...n, dismissId:n.id}));
+    currentNotifs = [...auto, ...manual];
+
+    document.getElementById("notifCountBadge").textContent = "("+currentNotifs.length+")";
+    document.getElementById("tabCountNotif").textContent = "("+currentNotifs.length+")";
+
+    const header = document.getElementById("notifAccHeader");
+    const body = document.getElementById("notifAccBody");
+    header.classList.toggle("open", notifAccOpen);
+    body.style.display = notifAccOpen ? "" : "none";
+
+    const wrap = document.getElementById("notifList");
+    wrap.innerHTML = currentNotifs.length
+      ? currentNotifs.map(n=>notifLineHtml(n, true)).join("")
+      : `<p class="notif-empty">Nimic urgent momentan.</p>`;
+
+    wrap.querySelectorAll("[data-dismiss]").forEach(b=>b.addEventListener("click", ()=>{
+      manualNotifications = manualNotifications.filter(n=>n.id!==b.dataset.dismiss);
+      render();
+    }));
+    wrap.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click", ()=>{
+      flashProjectId = +b.dataset.goto;
+      activeTab = "toate";
+      render();
+    }));
+  }
+
+  document.getElementById("notifAccHeader").addEventListener("click", ()=>{ notifAccOpen = !notifAccOpen; render(); });
+  document.getElementById("finishedAccHeader").addEventListener("click", ()=>{ finishedAccOpen = !finishedAccOpen; render(); });
+
+  document.getElementById("btnAddNotif").addEventListener("click", addManualNotification);
+  document.getElementById("notifInput").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); addManualNotification(); } });
+  function addManualNotification(){
+    const input = document.getElementById("notifInput");
+    const text = input.value.trim();
+    if(!text) return;
+    const severity = document.getElementById("notifSeverity").value;
+    const projSel = document.getElementById("notifProject").value;
+    manualNotifications.push({id:"n"+(nextNotifNum++), severity, text, projectId: projSel ? +projSel : null});
+    input.value = "";
+    document.getElementById("notifProject").value = "";
+    render();
+  }
+
+  /* ---------------- sugestii tab ---------------- */
+  const CATEGORY_LABELS = {imbunatatit:"Îmbunătățit", adaugat:"Adăugat", modificat:"Modificat", eliminat:"Eliminat", altceva:"Altceva"};
+  function renderSuggestions(){
+    document.getElementById("sugCountBadge").textContent = "("+suggestions.length+")";
+    document.getElementById("tabCountSug").textContent = "("+suggestions.length+")";
+
+    const header = document.getElementById("sugAccHeader");
+    const body = document.getElementById("sugAccBody");
+    header.classList.toggle("open", sugAccOpen);
+    body.style.display = sugAccOpen ? "" : "none";
+
+    const wrap = document.getElementById("sugList");
+    wrap.innerHTML = suggestions.length
+      ? suggestions.slice().reverse().map(s=>`
+        <div class="notif sug-${s.category}">
+          <span class="notif-dot"></span>
+          <span class="notif-text"><span class="sug-cat">${escapeHtml(CATEGORY_LABELS[s.category]||s.category)}</span> — ${escapeHtml(s.text)} <span class="sug-date">${s.date}</span></span>
+          <button class="notif-dismiss" data-sugdismiss="${s.id}" title="Șterge">✕</button>
+        </div>`).join("")
+      : `<p class="notif-empty">Niciun feedback notat încă.</p>`;
+
+    wrap.querySelectorAll("[data-sugdismiss]").forEach(b=>b.addEventListener("click", ()=>{
+      suggestions = suggestions.filter(s=>s.id!==b.dataset.sugdismiss);
+      render();
+    }));
+  }
+  document.getElementById("sugAccHeader").addEventListener("click", ()=>{ sugAccOpen = !sugAccOpen; render(); });
+  document.getElementById("btnAddSug").addEventListener("click", addSuggestion);
+  document.getElementById("sugInput").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); addSuggestion(); } });
+  function addSuggestion(){
+    const input = document.getElementById("sugInput");
+    const text = input.value.trim();
+    if(!text) return;
+    const category = document.getElementById("sugCategory").value;
+    suggestions.push({id:"s"+(nextSugNum++), category, text, date: todayStr()});
+    input.value = "";
+    render();
+  }
+
+  /* ---------------- prioritare tab ---------------- */
+  function renderPrioritare(){
+    const list = projects.filter(p=>p.priority);
+    document.getElementById("prioritareWrap").style.display = list.length ? "" : "none";
+    document.getElementById("prioritareEmptyHint").style.display = list.length ? "none" : "";
+    if(list.length) buildProjectsTable(document.getElementById("tablePrioritare"), list);
+  }
+
+  /* ---------------- toate proiectele tab ---------------- */
+  function renderToate(){
+    const active = projects.filter(p=>!isFinished(p));
+    const finished = projects.filter(isFinished);
+
+    buildProjectsTable(document.getElementById("tableToate"), active);
+
+    const finishedWrap = document.getElementById("finishedWrap");
+    document.getElementById("finishedCountBadge").textContent = "("+finished.length+")";
+    if(finished.length){
+      finishedWrap.style.display = "";
+      const finishedHeader = document.getElementById("finishedAccHeader");
+      const finishedBody = document.getElementById("finishedAccBody");
+      finishedHeader.classList.toggle("open", finishedAccOpen);
+      finishedBody.style.display = finishedAccOpen ? "" : "none";
+      buildProjectsTable(document.getElementById("tableFinished"), finished);
+    } else {
+      finishedWrap.style.display = "none";
+    }
+  }
+
+  function buildProjectsTable(table, list){
+    table.innerHTML = "";
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    headRow.innerHTML = `<th class="col-num">Cod</th><th class="col-name">Proiect</th><th class="col-client">Client</th><th class="col-deadline">Termen</th>`;
+    phases.forEach(ph=>{
+      const th = document.createElement("th");
+      th.className = "phase-head";
+      th.textContent = ph.name;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    const colCount = 4 + phases.length;
+
+    list.forEach(p=>{
+      const tr = document.createElement("tr");
+      tr.className = "data-row";
+      tr.id = "row-"+p.id;
+
+      const tdNum = document.createElement("td");
+      tdNum.className = "col-num";
+      tdNum.textContent = p.code;
+      tr.appendChild(tdNum);
+
+      const tdName = document.createElement("td");
+      tdName.className = "col-name";
+      const finished = isFinished(p);
+      tdName.innerHTML = `<div class="name-cell">
+          <span class="name-text${p.priority ? ' name-priority' : ''}" title="${escapeHtml(p.name)}">${escapeHtml(truncate(p.name))}</span>
+          ${p.driveLink ? '<a class="drive-flag" href="'+escapeHtml(p.driveLink)+'" target="_blank" rel="noopener" title="Deschide în Drive">⤴</a>' : ''}
+          ${p.notes ? '<span class="note-flag" title="Are notițe">✎</span>' : ''}
+          <span class="stage-tag${finished ? ' stage-done' : ''}" title="${finished ? 'Finalizat' : 'Stadiul curent: '+escapeHtml(currentStageLabel(p))}">${escapeHtml(currentStageLabel(p))}</span>
+          <span class="expand-caret">${expandedNotes.has(p.id) ? '▾' : '▸'}</span>
+        </div>`;
+      tdName.querySelector(".name-cell").addEventListener("click", ()=>{
+        if(expandedNotes.has(p.id)) expandedNotes.delete(p.id); else expandedNotes.add(p.id);
+        render();
+      });
+      const driveEl = tdName.querySelector(".drive-flag");
+      if(driveEl) driveEl.addEventListener("click", e=> e.stopPropagation());
+      tr.appendChild(tdName);
+
+      const tdClient = document.createElement("td");
+      tdClient.className = "col-client";
+      const cl = client(p.clientId);
+      tdClient.textContent = cl ? truncate(cl.name) : "—";
+      tdClient.title = cl ? cl.name : "";
+      tr.appendChild(tdClient);
+
+      const tdDeadline = document.createElement("td");
+      tdDeadline.className = "col-deadline";
+      tdDeadline.innerHTML = `<input type="date" class="deadline-input ${deadlineUrgency(p.deadline)}" value="${p.deadline||""}">`;
+      const dinput = tdDeadline.querySelector("input");
+      dinput.addEventListener("change", ()=>{ p.deadline = dinput.value || null; render(); });
+      tr.appendChild(tdDeadline);
+
+      phases.forEach(ph=>{
+        const td = document.createElement("td");
+        td.className = "phase-cell";
+        const st = p.status[ph.id] || "empty";
+        const dot = document.createElement("div");
+        dot.className = "dot" + (st==="done" ? " st-done" : st==="na" ? " st-na" : "");
+        dot.textContent = st==="done" ? "✓" : st==="na" ? "×" : "";
+        td.title = ph.name;
+        td.appendChild(dot);
+        td.addEventListener("click", ()=>{
+          const cur = p.status[ph.id] || "empty";
+          p.status[ph.id] = nextStatus(cur);
+          p.lastChange = {phaseId: ph.id, value: p.status[ph.id]};
+          render();
+        });
+        tr.appendChild(td);
+      });
+
+      // right-click -> context menu
+      tr.addEventListener("contextmenu", e=>{
+        e.preventDefault();
+        openContextMenu(e.clientX, e.clientY, p.id);
+      });
+      // middle-click -> quick open portal
+      tr.addEventListener("mousedown", e=>{ if(e.button===1) e.preventDefault(); });
+      tr.addEventListener("auxclick", e=>{ if(e.button===1){ e.preventDefault(); openPortal(p.id); } });
+
+      tbody.appendChild(tr);
+
+      if(expandedNotes.has(p.id)){
+        const trNotes = document.createElement("tr");
+        trNotes.className = "notes-row";
+        const td = document.createElement("td");
+        td.colSpan = colCount;
+        const linked = currentNotifs.filter(n=>n.projectId===p.id);
+        td.innerHTML = `<div class="notes-grid">
+            <div class="notes-col">
+              <p class="section-label" style="margin-top:0;">Notițe interne</p>
+              <textarea class="row-notes-textarea" placeholder="Ex: clientul preferă tâmplărie din lemn, așteptăm avizul de la structură până pe 12, etc.">${escapeHtml(p.notes||"")}</textarea>
+            </div>
+            <div class="notes-col">
+              <p class="section-label" style="margin-top:0;">Notificări relevante</p>
+              ${linked.length ? linked.map(n=>notifCardHtml(n)).join("") : '<p class="notif-empty">Nimic legat de acest proiect momentan.</p>'}
+            </div>
+          </div>`;
+        trNotes.appendChild(td);
+        tbody.appendChild(trNotes);
+        const ta = td.querySelector(".row-notes-textarea");
+        ta.addEventListener("input", ()=>{ p.notes = ta.value; });
+        td.querySelectorAll("[data-dismiss]").forEach(b=>b.addEventListener("click", ()=>{
+          manualNotifications = manualNotifications.filter(n=>n.id!==b.dataset.dismiss);
+          render();
+        }));
+      }
+    });
+    table.appendChild(tbody);
+  }
+
+  /* ---------------- context menu ---------------- */
+  const contextMenu = document.getElementById("contextMenu");
+  function openContextMenu(x, y, id){
+    contextProjectId = id;
+    const p = project(id);
+    document.getElementById("ctxPriorityBtn").textContent = p.priority ? "☆ Scoate din prioritare" : "★ Adaugă la prioritare";
+    document.getElementById("ctxDriveBtn").style.display = p.driveLink ? "block" : "none";
+    contextMenu.style.display = "block";
+    const rect = contextMenu.getBoundingClientRect();
+    let left = x, top = y;
+    if(left + rect.width > window.innerWidth - 8) left = window.innerWidth - rect.width - 8;
+    if(top + rect.height > window.innerHeight - 8) top = window.innerHeight - rect.height - 8;
+    contextMenu.style.left = left+"px";
+    contextMenu.style.top = top+"px";
+  }
+  function closeContextMenu(){ contextMenu.style.display = "none"; contextProjectId = null; }
+  document.addEventListener("click", e=>{ if(!contextMenu.contains(e.target)) closeContextMenu(); });
+  document.addEventListener("scroll", closeContextMenu, true);
+  window.addEventListener("blur", closeContextMenu);
+
+  contextMenu.querySelectorAll("button[data-action]").forEach(btn=>btn.addEventListener("click", ()=>{
+    const action = btn.dataset.action;
+    const id = contextProjectId;
+    closeContextMenu();
+    if(id==null) return;
+    if(action==="edit") openEdit(id);
+    else if(action==="portal") openPortal(id);
+    else if(action==="update") openUpdate(id);
+    else if(action==="drive"){ const p=project(id); if(p.driveLink) window.open(p.driveLink, "_blank", "noopener"); }
+    else if(action==="priority"){ const p=project(id); p.priority=!p.priority; render(); }
+    else if(action==="delete"){
+      const p = project(id);
+      askConfirm(`Sigur ștergi proiectul „${p.name}”? Nu poți reveni asupra acestei acțiuni.`, ()=>{
+        projects = projects.filter(x=>x.id!==id);
+        render();
+      });
+    }
+  }));
+
+  /* ---------------- edit project modal ---------------- */
+  const editOverlay = document.getElementById("editOverlay");
+  function openEdit(id){
+    editingProjectId = id;
+    const p = project(id);
+    document.getElementById("editCode").value = p.code;
+    document.getElementById("editName").value = p.name;
+    document.getElementById("editClient").value = (client(p.clientId)||{}).name || "";
+    document.getElementById("editDeadline").value = p.deadline || "";
+    document.getElementById("editDriveLink").value = p.driveLink || "";
+    editOverlay.classList.add("open");
+    setTimeout(()=>{ const el = document.getElementById("editName"); el.focus(); el.select(); }, 0);
+  }
+  document.getElementById("editSave").addEventListener("click", ()=>{
+    const p = project(editingProjectId);
+    if(!p) return;
+    p.code = document.getElementById("editCode").value.trim() || p.code;
+    p.name = document.getElementById("editName").value.trim() || "Proiect nou";
+    p.clientId = resolveClientByName(document.getElementById("editClient").value);
+    p.deadline = document.getElementById("editDeadline").value || null;
+    p.driveLink = document.getElementById("editDriveLink").value.trim() || "";
+    editOverlay.classList.remove("open");
+    render();
+  });
+
+  /* ---------------- clienți tab ---------------- */
+  function renderClienti(){
+    const body = document.getElementById("clientsBody");
+    body.innerHTML = "";
+    clients.forEach((c, idx)=>{
+      const linked = projects.filter(p=>p.clientId===c.id);
+      const tr = document.createElement("tr");
+      tr.className = "data-row";
+      tr.id = "client-row-"+c.id;
+
+      const tdNum = document.createElement("td");
+      tdNum.className = "col-num";
+      tdNum.textContent = idx+1;
+      tr.appendChild(tdNum);
+
+      const tdName = document.createElement("td");
+      tdName.className = "col-name";
+      tdName.textContent = truncate(c.name);
+      tdName.title = c.name;
+      tr.appendChild(tdName);
+
+      const tdPhone = document.createElement("td");
+      tdPhone.className = "col-client";
+      tdPhone.textContent = c.phone || "—";
+      tr.appendChild(tdPhone);
+
+      const tdEmail = document.createElement("td");
+      tdEmail.className = "col-client";
+      tdEmail.textContent = c.email || "—";
+      tr.appendChild(tdEmail);
+
+      const tdProjects = document.createElement("td");
+      tdProjects.className = "col-projects";
+      tdProjects.innerHTML = linked.length
+        ? linked.map(p=>`<button class="chip" data-goto="${p.id}">${escapeHtml(p.name)}${isFinished(p) ? " ✓" : ""}</button>`).join("")
+        : `<span class="chip-empty">niciun proiect încă</span>`;
+      tr.appendChild(tdProjects);
+
+      tr.addEventListener("contextmenu", e=>{
+        e.preventDefault();
+        openClientContextMenu(e.clientX, e.clientY, c.id);
+      });
+
+      body.appendChild(tr);
+    });
+
+    body.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click", ()=>{
+      flashProjectId = +b.dataset.goto;
+      activeTab = "toate";
+      render();
+    }));
+  }
+
+  /* ---------------- client context menu ---------------- */
+  const clientContextMenu = document.getElementById("clientContextMenu");
+  let contextClientId = null;
+  function openClientContextMenu(x, y, id){
+    contextClientId = id;
+    clientContextMenu.style.display = "block";
+    const rect = clientContextMenu.getBoundingClientRect();
+    let left = x, top = y;
+    if(left + rect.width > window.innerWidth - 8) left = window.innerWidth - rect.width - 8;
+    if(top + rect.height > window.innerHeight - 8) top = window.innerHeight - rect.height - 8;
+    clientContextMenu.style.left = left+"px";
+    clientContextMenu.style.top = top+"px";
+  }
+  function closeClientContextMenu(){ clientContextMenu.style.display = "none"; contextClientId = null; }
+  document.addEventListener("click", e=>{ if(!clientContextMenu.contains(e.target)) closeClientContextMenu(); });
+  document.addEventListener("scroll", closeClientContextMenu, true);
+  window.addEventListener("blur", closeClientContextMenu);
+
+  clientContextMenu.querySelectorAll("button[data-action]").forEach(btn=>btn.addEventListener("click", ()=>{
+    const action = btn.dataset.action;
+    const id = contextClientId;
+    closeClientContextMenu();
+    if(id==null) return;
+    if(action==="editclient") openEditClient(id);
+    else if(action==="deleteclient"){
+      const c = clients.find(x=>x.id===id);
+      askConfirm(`Sigur ștergi clientul „${c.name}”? Proiectele legate rămân, dar fără client asociat.`, ()=>{
+        clients = clients.filter(x=>x.id!==id);
+        projects.forEach(p=>{ if(p.clientId===id) p.clientId = null; });
+        render();
+      });
+    }
+  }));
+
+  const editClientOverlay = document.getElementById("editClientOverlay");
+  let editingClientId = null;
+  function openEditClient(id){
+    editingClientId = id;
+    const c = clients.find(x=>x.id===id);
+    document.getElementById("editClientName").value = c.name;
+    document.getElementById("editClientPhone").value = c.phone || "";
+    document.getElementById("editClientEmail").value = c.email || "";
+    editClientOverlay.classList.add("open");
+    setTimeout(()=>{ const el = document.getElementById("editClientName"); el.focus(); el.select(); }, 0);
+  }
+  document.getElementById("editClientSave").addEventListener("click", ()=>{
+    const c = clients.find(x=>x.id===editingClientId);
+    if(!c) return;
+    c.name = document.getElementById("editClientName").value.trim() || c.name;
+    c.phone = document.getElementById("editClientPhone").value.trim();
+    c.email = document.getElementById("editClientEmail").value.trim();
+    editClientOverlay.classList.remove("open");
+    render();
+  });
+
+  /* ---------------- tabs & add button ---------------- */
+  document.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click", ()=>{
+    activeTab = b.dataset.tab;
+    render();
+  }));
+
+  document.getElementById("btnAdd").addEventListener("click", ()=>{
+    if(activeTab==="clienti"){
+      const nc = {id:"c"+(nextClientNum++), name:"Client nou", phone:"", email:""};
+      clients.push(nc);
+      render();
+      openEditClient(nc.id);
+      return;
+    }
+    const id = nextProjectId++;
+    const status = {};
+    phases.forEach(ph=> status[ph.id]="empty");
+    const p = {id, code: nextProjectCode(), name:"Proiect nou", clientId:null, deadline:null, driveLink:"", notes:"", priority:false, status, lastChange:null, approved:false};
+    projects.push(p);
+    activeTab = "toate";
+    flashProjectId = id;
+    render();
+    openEdit(id);
+  });
+
+  /* ---------------- backup / export xlsx ---------------- */
+  function backupFilename(){
+    const d = new Date();
+    const pad = n=>String(n).padStart(2,"0");
+    const date = pad(d.getDate())+"-"+pad(d.getMonth()+1)+"-"+d.getFullYear();
+    const time = pad(d.getHours())+"-"+pad(d.getMinutes());
+    return `POINT-STADIU-PROIECTARE-${date}-${time}.xlsx`;
+  }
+  function statusLabel(s){ return s==="done" ? "Finalizat" : s==="na" ? "Nu se aplică" : "Neînceput"; }
+  document.getElementById("btnBackup").addEventListener("click", ()=>{
+    if(typeof XLSX === "undefined"){ showToast("Exportul nu s-a putut încărca — verifică rețeaua"); return; }
+    const projHeader = ["Cod","Proiect","Prioritar","Client","Termen", ...phases.map(p=>p.name), "Stadiu", "Link Drive", "Notițe"];
+    const projRows = projects.map(p=>[
+      p.code, p.name, p.priority ? "Da" : "Nu", (client(p.clientId)||{}).name || "", fmtDate(p.deadline),
+      ...phases.map(ph=>statusLabel(p.status[ph.id]||"empty")),
+      isFinished(p) ? "Terminat" : "Activ",
+      p.driveLink || "",
+      p.notes || ""
+    ]);
+    const wsProj = XLSX.utils.aoa_to_sheet([projHeader, ...projRows]);
+
+    const clientHeader = ["Nr.","Client","Telefon","Email","Proiecte"];
+    const clientRows = clients.map((c, idx)=>[idx+1, c.name, c.phone, c.email, projects.filter(p=>p.clientId===c.id).map(p=>p.name).join(", ")]);
+    const wsClients = XLSX.utils.aoa_to_sheet([clientHeader, ...clientRows]);
+
+    const notifHeader = ["Severitate","Notificare","Proiect legat"];
+    const notifRows = manualNotifications.map(n=>[n.severity, n.text, n.projectId ? ((project(n.projectId)||{}).code||"") : ""]);
+    const wsNotif = XLSX.utils.aoa_to_sheet([notifHeader, ...notifRows]);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsProj, "Proiecte");
+    XLSX.utils.book_append_sheet(wb, wsClients, "Clienți");
+    XLSX.utils.book_append_sheet(wb, wsNotif, "Notificări");
+    XLSX.writeFile(wb, backupFilename());
+    showToast("Back-up generat");
+  });
+
+  /* ---------------- portal modal ---------------- */
+  const portalOverlay = document.getElementById("portalOverlay");
+  function openPortal(id){
+    const p = project(id);
+    activePortalId = id;
+    document.getElementById("portalTitle").textContent = p.name;
+    document.getElementById("portalFinishedBadge").style.display = isFinished(p) ? "inline-block" : "none";
+
+    const firstEmpty = phases.find(ph => (p.status[ph.id]||"empty")==="empty");
+    const rail = document.getElementById("portalRail");
+    rail.innerHTML = "";
+    phases.forEach(ph=>{
+      const st = p.status[ph.id] || "empty";
+      const isCurrent = firstEmpty && ph.id===firstEmpty.id;
+      const step = document.createElement("div");
+      step.className = "rail-step";
+      step.innerHTML = `<div class="rail-dot ${st==="done"?"done":st==="na"?"na":isCurrent?"current":""}"></div>
+        <div class="rail-label ${isCurrent?"active":""}">${escapeHtml(ph.name)}</div>`;
+      rail.appendChild(step);
+    });
+
+    const stamp = document.getElementById("stampSvg");
+    stamp.classList.remove("show");
+    document.getElementById("decisionCard").querySelector(".approved-line")?.remove();
+    const btn = document.getElementById("btnApprove");
+    const decisionText = document.getElementById("decisionText");
+    if(p.approved){ showApproved(p); }
+    else { decisionText.style.display = "block"; btn.style.display = "inline-block"; }
+    portalOverlay.classList.add("open");
+  }
+
+  function showApproved(p){
+    const btn = document.getElementById("btnApprove");
+    document.getElementById("decisionText").style.display = "none";
+    btn.style.display = "none";
+    const stamp = document.getElementById("stampSvg");
+    stamp.classList.add("show");
+    document.getElementById("stampDate").textContent = p.approvedDate || todayStr();
+    if(!document.querySelector("#decisionCard .approved-line")){
+      const line = document.createElement("p");
+      line.className = "approved-line";
+      line.style.marginTop = "10px";
+      line.innerHTML = `✓ Aprobat pe ${p.approvedDate || todayStr()}`;
+      document.getElementById("decisionCard").appendChild(line);
+    }
+  }
+
+  document.getElementById("btnApprove").addEventListener("click", ()=>{
+    const p = project(activePortalId);
+    p.approved = true;
+    p.approvedDate = todayStr();
+    showApproved(p);
+    showToast("Decizie aprobată de client");
+  });
+
+  /* ---------------- update modal ---------------- */
+  const updateOverlay = document.getElementById("updateOverlay");
+  function buildMessage(p){
+    const cl = client(p.clientId);
+    const greet = cl ? ", " + cl.name.split(" ")[0] : "";
+    if(!p.lastChange){
+      return `Bună${greet}! Proiectul ${p.name} tocmai a pornit — revin curând cu un update.\n\n— Atelier`;
+    }
+    const ph = phases.find(x=>x.id===p.lastChange.phaseId);
+    const phaseName = ph ? ph.name : "";
+    let phrase;
+    if(p.lastChange.value==="done") phrase = `am finalizat faza „${phaseName}”`;
+    else if(p.lastChange.value==="na") phrase = `faza „${phaseName}” nu se aplică pentru acest proiect`;
+    else phrase = `am revenit la faza „${phaseName}”`;
+
+    let nextLine = "";
+    if(p.lastChange.value==="done" && ph){
+      const idx = phases.findIndex(x=>x.id===ph.id);
+      const next = phases.slice(idx+1).find(x=> (p.status[x.id]||"empty")==="empty");
+      if(next) nextLine = ` Următorul pas: „${next.name}”.`;
+      else if(isFinished(p)) nextLine = ` Cu asta, proiectul e finalizat.`;
+    }
+    return `Bună${greet}! Update rapid pe ${p.name}: ${phrase}.${nextLine} Dacă ai întrebări, sunt aici.\n\n— Atelier`;
+  }
+
+  function openUpdate(id){
+    const p = project(id);
+    activeUpdateId = id;
+    document.getElementById("updateTitle").textContent = p.name;
+    document.getElementById("msgPreview").textContent = buildMessage(p);
+    setChannel("whatsapp");
+    updateOverlay.classList.add("open");
+  }
+
+  function setChannel(ch){
+    activeChannel = ch;
+    document.querySelectorAll(".channel-btn").forEach(b=>b.classList.toggle("active", b.dataset.channel===ch));
+    document.getElementById("msgPreview").classList.toggle("whatsapp", ch==="whatsapp");
+  }
+  document.querySelectorAll(".channel-btn").forEach(b=>b.addEventListener("click", ()=>setChannel(b.dataset.channel)));
+
+  document.getElementById("btnCopy").addEventListener("click", ()=>{
+    const text = document.getElementById("msgPreview").textContent;
+    if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>showToast("Text copiat")).catch(()=>showToast("Text copiat")); }
+    else { showToast("Text copiat"); }
+  });
+  document.getElementById("btnSend").addEventListener("click", ()=>{
+    showToast(activeChannel==="whatsapp" ? "Trimis pe WhatsApp" : "Trimis pe email");
+    setTimeout(()=>updateOverlay.classList.remove("open"), 500);
+  });
+
+  /* ---------------- confirm modal ---------------- */
+  const confirmOverlay = document.getElementById("confirmOverlay");
+  function askConfirm(message, onYes){
+    document.getElementById("confirmMessage").textContent = message;
+    pendingConfirm = onYes;
+    confirmOverlay.classList.add("open");
+  }
+  document.getElementById("confirmYes").addEventListener("click", ()=>{
+    confirmOverlay.classList.remove("open");
+    const fn = pendingConfirm;
+    pendingConfirm = null;
+    if(fn) fn();
+  });
+  document.getElementById("confirmNo").addEventListener("click", ()=>{
+    confirmOverlay.classList.remove("open");
+    pendingConfirm = null;
+  });
+
+  /* ---------------- shared ---------------- */
+  document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click", ()=>{
+    portalOverlay.classList.remove("open");
+    updateOverlay.classList.remove("open");
+    editOverlay.classList.remove("open");
+    editClientOverlay.classList.remove("open");
+    confirmOverlay.classList.remove("open");
+    pendingConfirm = null;
+  }));
+  [portalOverlay, updateOverlay, editOverlay, editClientOverlay, confirmOverlay].forEach(ov=>{
+    ov.addEventListener("click", e=>{ if(e.target===ov){ ov.classList.remove("open"); if(ov===confirmOverlay) pendingConfirm=null; } });
+  });
+  document.addEventListener("keydown", e=>{
+    if(e.key==="Escape"){
+      portalOverlay.classList.remove("open");
+      updateOverlay.classList.remove("open");
+      editOverlay.classList.remove("open");
+      editClientOverlay.classList.remove("open");
+      confirmOverlay.classList.remove("open");
+      pendingConfirm = null;
+      closeContextMenu();
+      closeClientContextMenu();
+    }
+  });
+
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
+  }
+
+  render();
+</script>
+
+</body>
+</html>
