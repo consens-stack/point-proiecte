@@ -324,6 +324,15 @@
   .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,12px);background:var(--ink);color:var(--paper);font-size:13.5px;padding:11px 18px;border-radius:6px;opacity:0;pointer-events:none;transition:all .2s ease;z-index:60;}
   .toast.show{opacity:1;transform:translate(-50%,0);}
 
+  .app-footer{
+    margin-top:44px;padding-top:18px;border-top:1px solid var(--line-soft);
+    font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .app-footer a{color:var(--ink-faint);text-decoration:none;}
+  .app-footer a:hover{color:var(--blueprint);text-decoration:underline;}
+  .app-footer-sep{color:var(--line);}
+
   @media (max-width:640px){
     .app{padding:24px 16px 60px;}
     .head{align-items:flex-start;}
@@ -517,6 +526,14 @@
     <p class="grid-hint">Un loc rapid să notezi ce vrei să schimbi data viitoare când lucrezi la aplicație — nu se trimite nicăieri, rămâne doar aici.</p>
   </div>
 
+  <footer class="app-footer">
+    <a href="https://www.pointdb.ro" target="_blank" rel="noopener">www.pointdb.ro</a>
+    <span class="app-footer-sep">·</span>
+    <a href="mailto:office@pointdb.ro">office@pointdb.ro</a>
+    <span class="app-footer-sep">·</span>
+    <a href="tel:+40727647368">0727 647 368</a>
+  </footer>
+
 </div>
 
 <datalist id="clientsDatalist"></datalist>
@@ -597,38 +614,11 @@
       <div class="rail-vertical" id="portalRail"></div>
 
       <div class="portal-drive-link" id="portalDriveWrap" style="display:none;">
-        <a class="drive-link-btn" id="portalDriveLink" href="#" target="_blank" rel="noopener">⤴ Deschide folderul cu fișiere</a>
+        <a class="drive-link-btn" id="portalDriveLink" href="#" target="_blank" rel="noopener">⤴ Vezi fișierele proiectului</a>
       </div>
 
-      <p class="section-label">Documente recente</p>
-      <div class="docs-row">
-        <div class="doc-card">
-          <svg class="doc-icon" viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="16" rx="1" stroke="currentColor"/><path d="M6 6h8M6 9.5h8M6 13h5" stroke="currentColor"/></svg>
-          Plan de fațadă — v2
-        </div>
-        <div class="doc-card">
-          <svg class="doc-icon" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="1" stroke="currentColor"/><circle cx="7" cy="9" r="1.6" stroke="currentColor"/><path d="M3 15l4.5-4 3 3 3.5-4.5 4 5.5" stroke="currentColor"/></svg>
-          Foto șantier — sud
-        </div>
-        <div class="doc-card">
-          <svg class="doc-icon" viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="16" rx="1" stroke="currentColor"/><path d="M6 6h8M6 9.5h8M6 13h5" stroke="currentColor"/></svg>
-          Deviz estimativ
-        </div>
-      </div>
-
-      <div class="decision-card" id="decisionCard">
-        <p class="section-label" style="margin-top:0;">Decizie în așteptare</p>
-        <p class="decision-quote" id="decisionText">"Aprob varianta 2 de fațadă, cu tencuială deschisă la culoare."</p>
-        <button class="btn-approve" id="btnApprove">Aprob</button>
-        <div class="stamp-wrap">
-          <svg class="stamp" id="stampSvg" width="108" height="108" viewBox="0 0 108 108">
-            <circle cx="54" cy="54" r="48" fill="none" stroke="#8B3A2B" stroke-width="2.4"/>
-            <circle cx="54" cy="54" r="40" fill="none" stroke="#8B3A2B" stroke-width="1"/>
-            <text x="54" y="50" text-anchor="middle" fill="#8B3A2B" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="700" letter-spacing="1">APROBAT</text>
-            <text x="54" y="66" text-anchor="middle" fill="#8B3A2B" font-family="IBM Plex Mono, monospace" font-size="8" id="stampDate">00.00.0000</text>
-          </svg>
-        </div>
-      </div>
+      <p class="section-label">Notificări importante</p>
+      <div id="portalNotifList"></div>
 
       <div class="portal-link-row">
         <button class="btn-secondary" id="btnCopyPortalLink">Copiază link client</button>
@@ -1315,7 +1305,6 @@
         const td = document.createElement("td");
         td.colSpan = colCount;
         const linked = currentNotifs.filter(n=>n.projectId===p.id);
-        const docs = p.documents || [];
         td.innerHTML = `<div class="notes-grid">
             <div class="notes-col">
               <p class="section-label" style="margin-top:0;">Notițe interne</p>
@@ -1324,18 +1313,6 @@
             <div class="notes-col">
               <p class="section-label" style="margin-top:0;">Notificări relevante</p>
               ${linked.length ? linked.map(n=>notifCardHtml(n)).join("") : '<p class="notif-empty">Nimic legat de acest proiect momentan.</p>'}
-            </div>
-            <div class="notes-col">
-              <p class="section-label" style="margin-top:0;">Documente cu termen</p>
-              <div class="doc-list">
-                ${docs.length ? docs.map(doc=>docLineHtml(doc)).join("") : '<p class="notif-empty">Niciun document urmărit încă.</p>'}
-              </div>
-              <div class="doc-add">
-                <input type="text" class="doc-add-name" placeholder="Ex: Certificat de urbanism">
-                <input type="date" class="doc-add-date">
-                <input type="text" class="doc-add-link" placeholder="Link Drive (opțional)">
-                <button class="btn-secondary doc-add-btn">Adaugă</button>
-              </div>
             </div>
           </div>`;
         trNotes.appendChild(td);
@@ -1346,35 +1323,9 @@
           manualNotifications = manualNotifications.filter(n=>n.id!==b.dataset.dismiss);
           render();
         }));
-        td.querySelectorAll("[data-docdelete]").forEach(b=>b.addEventListener("click", ()=>{
-          p.documents = (p.documents||[]).filter(d=>d.id!==b.dataset.docdelete);
-          render();
-        }));
-        td.querySelector(".doc-add-btn").addEventListener("click", ()=>{
-          const nameEl = td.querySelector(".doc-add-name");
-          const dateEl = td.querySelector(".doc-add-date");
-          const linkEl = td.querySelector(".doc-add-link");
-          const name = nameEl.value.trim();
-          if(!name) { nameEl.focus(); return; }
-          if(!p.documents) p.documents = [];
-          p.documents.push({id:"doc"+Date.now()+Math.floor(Math.random()*1000), name, expiry: dateEl.value || null, driveLink: linkEl.value.trim()});
-          render();
-        });
       }
     });
     table.appendChild(tbody);
-  }
-
-  function docLineHtml(doc){
-    const urgency = doc.expiry ? deadlineUrgency(doc.expiry) : "";
-    return `<div class="doc-row">
-      <div class="doc-row-main">
-        <span class="doc-name">${escapeHtml(doc.name)}</span>
-        <span class="doc-date ${urgency}">${doc.expiry ? fmtDate(doc.expiry) : "fără termen"}</span>
-      </div>
-      ${doc.driveLink ? `<a class="drive-flag" href="${escapeHtml(doc.driveLink)}" target="_blank" rel="noopener" title="Deschide în Drive">⤴</a>` : ""}
-      <button class="notif-dismiss" data-docdelete="${doc.id}" title="Șterge">✕</button>
-    </div>`;
   }
 
   /* ---------------- context menu ---------------- */
@@ -1705,13 +1656,15 @@
       rail.appendChild(step);
     });
 
-    const stamp = document.getElementById("stampSvg");
-    stamp.classList.remove("show");
-    document.getElementById("decisionCard").querySelector(".approved-line")?.remove();
-    const btn = document.getElementById("btnApprove");
-    const decisionText = document.getElementById("decisionText");
-    if(p.approved){ showApproved(p); }
-    else { decisionText.style.display = "block"; btn.style.display = "inline-block"; }
+    const projNotifs = [
+      ...computeAutoNotifications().filter(n=>n.projectId===p.id),
+      ...manualNotifications.filter(n=>n.projectId===p.id),
+    ];
+    const notifWrap = document.getElementById("portalNotifList");
+    notifWrap.innerHTML = projNotifs.length
+      ? projNotifs.map(n=>notifCardHtml(n)).join("")
+      : '<p class="notif-empty">Nimic urgent momentan.</p>';
+
     portalOverlay.classList.add("open");
   }
 
@@ -1724,31 +1677,6 @@
     } else {
       showToast("Link copiat");
     }
-  });
-
-  function showApproved(p){
-    const btn = document.getElementById("btnApprove");
-    document.getElementById("decisionText").style.display = "none";
-    btn.style.display = "none";
-    const stamp = document.getElementById("stampSvg");
-    stamp.classList.add("show");
-    document.getElementById("stampDate").textContent = p.approvedDate || todayStr();
-    if(!document.querySelector("#decisionCard .approved-line")){
-      const line = document.createElement("p");
-      line.className = "approved-line";
-      line.style.marginTop = "10px";
-      line.innerHTML = `✓ Aprobat pe ${p.approvedDate || todayStr()}`;
-      document.getElementById("decisionCard").appendChild(line);
-    }
-  }
-
-  document.getElementById("btnApprove").addEventListener("click", ()=>{
-    const p = project(activePortalId);
-    p.approved = true;
-    p.approvedDate = todayStr();
-    showApproved(p);
-    showToast("Decizie aprobată de client");
-    saveState();
   });
 
   /* ---------------- update modal ---------------- */
@@ -2015,8 +1943,8 @@
     document.getElementById("portalOverlay").classList.add("open");
     document.getElementById("portalTitle").textContent = "Link indisponibil";
     document.getElementById("portalRail").innerHTML = "";
-    document.getElementById("decisionCard").style.display = "none";
-    document.querySelector(".docs-row").style.display = "none";
+    document.getElementById("portalDriveWrap").style.display = "none";
+    document.getElementById("portalNotifList").innerHTML = "";
     document.querySelector(".portal-footnote").textContent = msg || "Nu am găsit acest proiect. Verifică link-ul primit sau contactează biroul.";
   }
 
@@ -2032,7 +1960,8 @@
         if(data && data.projects){
           projects = data.projects;
           if(data.clients) clients = data.clients;
-          initialSyncDone = true; // permite salvarea aprobării clientului înapoi în cloud
+          if(data.manualNotifications) manualNotifications = data.manualNotifications;
+          initialSyncDone = true; // permite salvarea din portalul public înapoi în cloud, dacă e nevoie ulterior
           const p = projects.find(pp=>pp.code===code);
           if(p) openPortal(p.id);
           else showPortalNotFound();
