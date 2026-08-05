@@ -114,6 +114,8 @@
   #tableFinished th.col-client, #tableFinished td.col-client{width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   #tableToate th.col-deadline, #tableToate td.col-deadline,
   #tableFinished th.col-deadline, #tableFinished td.col-deadline{width:150px;}
+  #tableToate th.col-cu-head, #tableToate td.col-cu,
+  #tableFinished th.col-cu-head, #tableFinished td.col-cu{width:130px;}
   #tableToate th.col-drive-head, #tableToate td.col-drive,
   #tableFinished th.col-drive-head, #tableFinished td.col-drive{width:130px;text-align:center;}
   #tableToate th.col-pay-head, #tableToate td.col-pay,
@@ -131,6 +133,8 @@
   .fin-stat-label{display:block;font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
   .fin-stat-value{font-family:var(--font-display);font-weight:700;font-size:21px;color:var(--ink);}
   table.grid th.col-fin, table.grid td.col-fin{text-align:right;padding-right:16px;font-family:var(--font-mono);font-size:12.5px;}
+  .fin-input{width:110px;text-align:right;border:1px solid var(--line);border-radius:var(--radius);padding:6px 9px;font-family:var(--font-mono);font-size:12.5px;background:var(--paper);color:var(--ink);}
+  .fin-input:focus{outline:2px solid var(--blueprint);outline-offset:1px;background:#fff;}
   td.col-fin.fin-owed{color:var(--stamp);font-weight:600;}
   table.grid thead th{font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);text-align:center;padding:12px 6px;border-bottom:1px solid var(--line);background:var(--paper-alt);position:sticky;top:0;z-index:4;}
   table.grid thead th.col-num{width:56px;text-align:center;position:sticky;left:0;z-index:6;}
@@ -550,6 +554,9 @@
       <label class="field-label">Termen</label>
       <input type="date" class="field-input" id="editDeadline">
 
+      <label class="field-label">Expirare Certificat de Urbanism</label>
+      <input type="date" class="field-input" id="editCuExpiry">
+
       <label class="field-label">Link Drive intern (echipă)</label>
       <input type="text" class="field-input" id="editDriveLink" placeholder="https://drive.google.com/…">
       <p class="field-hint">Vizibil doar în aplicație — nu apare niciodată în portalul clientului.</p>
@@ -762,7 +769,7 @@
     status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
   {id:9, code:"417/220", name:"CONSTRUIRE LOCUINȚĂ", clientId:"c9", deadline:null, driveLink:"", notes:"Adresă: Roman, str. Vasile Lupu · Achiziție: CLIENT FIDEL", priority:false,
     status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
-  {id:10, code:"410/219", name:"DESFIINȚARE CORP C3, C5, MODIFICARE CORP C4, CONSTRUIRE CORP P+M, AMENAJARE CURTE ȘI CONSTRUIRE PARCARE NEACOPERITĂ", clientId:"c10", deadline:null, driveLink:"", documents:[{id:"doc-demo-1", name:"Certificat de Urbanism", expiry: addDays(25), driveLink:""}], notes:"Adresă: str. Soldat Porojan, nr. 7 · Reprezentant: Bogdan Gherasimescu · Achiziție: CLIENT FIDEL\n\nDin situația proiecte (transcris):\n219 - Parohia Sf. Gheorghe\n• P.U.D. – Timotei contactat 10.02.2026\n• Aviz arhitect șef\n• Aviz geotehnic preliminar\n• Mediu\n• Cultură\n• CJ Neamț\n• Topo\n• Expertiză tehnică\n• Studiu geo – dat Divile 10.02.2026\n• DSP\n• ISU\n• Comisia de circulație\n• Apavital\n• Energie\n• Gaz\n• Orange\n• Rossal\n• DTAC + DTAD + DTOE", priority:true,
+  {id:10, code:"410/219", name:"DESFIINȚARE CORP C3, C5, MODIFICARE CORP C4, CONSTRUIRE CORP P+M, AMENAJARE CURTE ȘI CONSTRUIRE PARCARE NEACOPERITĂ", clientId:"c10", deadline:null, cuExpiry: addDays(25), driveLink:"", documents:[], notes:"Adresă: str. Soldat Porojan, nr. 7 · Reprezentant: Bogdan Gherasimescu · Achiziție: CLIENT FIDEL\n\nDin situația proiecte (transcris):\n219 - Parohia Sf. Gheorghe\n• P.U.D. – Timotei contactat 10.02.2026\n• Aviz arhitect șef\n• Aviz geotehnic preliminar\n• Mediu\n• Cultură\n• CJ Neamț\n• Topo\n• Expertiză tehnică\n• Studiu geo – dat Divile 10.02.2026\n• DSP\n• ISU\n• Comisia de circulație\n• Apavital\n• Energie\n• Gaz\n• Orange\n• Rossal\n• DTAC + DTAD + DTOE", priority:true,
     status:{ph1:"done",ph2:"done",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph2", value:"done"}, approved:false},
   {id:11, code:"409/218", name:"CONSTRUIRE LOCUINȚĂ PARTER", clientId:"c11", deadline:null, driveLink:"", notes:"Adresă: Roman · Inginer: Divile · Achiziție: CLIENT FIDEL", priority:false,
     status:{ph1:"done",ph2:"empty",ph3:"empty",ph4:"empty",ph5:"empty",ph6:"empty",ph7:"empty",ph8:"empty"}, lastChange:{phaseId:"ph1", value:"done"}, approved:false},
@@ -849,6 +856,11 @@
     if(days <= 7) return "due-warning";
     return "";
   }
+  function cuUrgency(iso){
+    if(!iso) return "";
+    const days = daysUntil(iso);
+    return days <= 30 ? "due-urgent" : "";
+  }
   function resolveClientByName(name){
     name = name.trim();
     if(!name) return null;
@@ -924,6 +936,14 @@
           out.push({severity: days<=2 ? "urgent" : "warning", text:`Termen pentru „${p.name}” expiră în ${days} ${days===1?"zi":"zile"}.`, projectId:p.id, dismissId:null});
         }
       }
+      if(p.cuExpiry){
+        const days = daysUntil(p.cuExpiry);
+        if(days < 0){
+          out.push({severity:"urgent", text:`Certificatul de Urbanism pentru „${p.name}” a expirat — cu ${Math.abs(days)} ${Math.abs(days)===1?"zi":"zile"} în urmă.`, projectId:p.id, dismissId:null});
+        } else if(days <= 30){
+          out.push({severity: days<=7 ? "urgent" : "warning", text:`Certificatul de Urbanism pentru „${p.name}” expiră în ${days} ${days===1?"zi":"zile"}.`, projectId:p.id, dismissId:null});
+        }
+      }
       (p.documents||[]).forEach(doc=>{
         if(!doc.expiry) return;
         const days = daysUntil(doc.expiry);
@@ -959,7 +979,7 @@
     const thead = document.createElement("thead");
     thead.innerHTML = `<tr>
       <th class="col-num">Cod</th><th class="col-name">Proiect</th><th class="col-client">Client</th>
-      <th class="col-fin">Valoare contract</th><th class="col-fin">Achitat</th><th class="col-fin">Rest de încasat</th><th class="col-fin">Procent</th>
+      <th class="col-fin">Valoare contract</th><th class="col-fin">Achitat</th><th class="col-fin">Rest de încasat</th>
     </tr>`;
     table.appendChild(thead);
     const tbody = document.createElement("tbody");
@@ -967,18 +987,50 @@
       const tr = document.createElement("tr");
       tr.className = "data-row";
       const cl = client(p.clientId);
-      const hasValue = !!p.contractValue;
       const val = p.contractValue || 0, paid = p.paidAmount || 0, rest = val - paid;
-      const pct = paymentPercent(p);
-      tr.innerHTML = `
-        <td class="col-num">${escapeHtml(p.code)}</td>
-        <td class="col-name" title="${escapeHtml(p.name)}">${escapeHtml(truncate(p.name))}</td>
-        <td class="col-client" title="${cl?escapeHtml(cl.name):""}">${cl?escapeHtml(truncate(cl.name)):"—"}</td>
-        <td class="col-fin">${hasValue ? fmtRON(val) : "—"}</td>
-        <td class="col-fin">${fmtRON(paid)}</td>
-        <td class="col-fin${hasValue && rest>0 ? " fin-owed" : ""}">${hasValue ? fmtRON(rest) : "—"}</td>
-        <td class="col-fin">${pct===null ? '<span class="drive-link-empty">—</span>' : `<span class="pay-badge ${pct>=100?'pay-full':pct>0?'pay-partial':'pay-none'}">${pct}%</span>`}</td>
-      `;
+
+      const tdNum = document.createElement("td");
+      tdNum.className = "col-num";
+      tdNum.textContent = p.code;
+      tr.appendChild(tdNum);
+
+      const tdName = document.createElement("td");
+      tdName.className = "col-name";
+      tdName.title = p.name;
+      tdName.textContent = truncate(p.name);
+      tr.appendChild(tdName);
+
+      const tdClient = document.createElement("td");
+      tdClient.className = "col-client";
+      tdClient.title = cl ? cl.name : "";
+      tdClient.textContent = cl ? truncate(cl.name) : "—";
+      tr.appendChild(tdClient);
+
+      const tdValue = document.createElement("td");
+      tdValue.className = "col-fin";
+      tdValue.innerHTML = `<input type="number" class="fin-input" min="0" step="1" placeholder="—" value="${p.contractValue!=null ? p.contractValue : ""}">`;
+      tdValue.querySelector("input").addEventListener("change", e=>{
+        const v = e.target.value;
+        p.contractValue = v ? Number(v) : null;
+        render();
+      });
+      tr.appendChild(tdValue);
+
+      const tdPaid = document.createElement("td");
+      tdPaid.className = "col-fin";
+      tdPaid.innerHTML = `<input type="number" class="fin-input" min="0" step="1" placeholder="0" value="${p.paidAmount ? p.paidAmount : ""}">`;
+      tdPaid.querySelector("input").addEventListener("change", e=>{
+        const v = e.target.value;
+        p.paidAmount = v ? Number(v) : 0;
+        render();
+      });
+      tr.appendChild(tdPaid);
+
+      const tdRest = document.createElement("td");
+      tdRest.className = "col-fin" + (p.contractValue && rest>0 ? " fin-owed" : "");
+      tdRest.textContent = p.contractValue ? fmtRON(rest) : "—";
+      tr.appendChild(tdRest);
+
       tr.addEventListener("contextmenu", e=>{ e.preventDefault(); openContextMenu(e.clientX, e.clientY, p.id); });
       tbody.appendChild(tr);
     });
@@ -1140,6 +1192,10 @@
       th.className = "col-drive-head";
       th.textContent = "Drive";
       headRow.appendChild(th);
+      const thCu = document.createElement("th");
+      thCu.className = "col-cu-head";
+      thCu.textContent = "EXP CU";
+      headRow.appendChild(thCu);
       const thPay = document.createElement("th");
       thPay.className = "col-pay-head";
       thPay.textContent = "Achitat";
@@ -1149,7 +1205,7 @@
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
-    const colCount = (showClient ? 4 : 3) + (showPhases ? phases.length : 2);
+    const colCount = (showClient ? 4 : 3) + (showPhases ? phases.length : 3);
 
     list.forEach(p=>{
       const tr = document.createElement("tr");
@@ -1225,6 +1281,13 @@
         const a = tdDrive.querySelector("a");
         if(a) a.addEventListener("click", e=> e.stopPropagation());
         tr.appendChild(tdDrive);
+
+        const tdCu = document.createElement("td");
+        tdCu.className = "col-cu";
+        tdCu.innerHTML = `<input type="date" class="deadline-input ${cuUrgency(p.cuExpiry)}" value="${p.cuExpiry||""}">`;
+        const cuInput = tdCu.querySelector("input");
+        cuInput.addEventListener("change", ()=>{ p.cuExpiry = cuInput.value || null; render(); });
+        tr.appendChild(tdCu);
 
         const tdPay = document.createElement("td");
         tdPay.className = "col-pay";
@@ -1362,6 +1425,7 @@
     document.getElementById("editName").value = p.name;
     document.getElementById("editClient").value = (client(p.clientId)||{}).name || "";
     document.getElementById("editDeadline").value = p.deadline || "";
+    document.getElementById("editCuExpiry").value = p.cuExpiry || "";
     document.getElementById("editDriveLink").value = p.driveLink || "";
     document.getElementById("editClientDriveLink").value = p.clientDriveLink || "";
     document.getElementById("editContractValue").value = p.contractValue || "";
@@ -1400,6 +1464,7 @@
     p.name = document.getElementById("editName").value.trim() || "Proiect nou";
     p.clientId = resolveClientByName(document.getElementById("editClient").value);
     p.deadline = document.getElementById("editDeadline").value || null;
+    p.cuExpiry = document.getElementById("editCuExpiry").value || null;
     p.driveLink = document.getElementById("editDriveLink").value.trim() || "";
     p.clientDriveLink = document.getElementById("editClientDriveLink").value.trim() || "";
     const cv = document.getElementById("editContractValue").value;
@@ -1535,7 +1600,7 @@
     const id = nextProjectId++;
     const status = {};
     phases.forEach(ph=> status[ph.id]="empty");
-    const p = {id, code: nextProjectCode(), name:"Proiect nou", clientId:null, deadline:null, driveLink:"", clientDriveLink:"", notes:"", priority:false, documents:[], contractValue:null, paidAmount:0, status, lastChange:null, approved:false};
+    const p = {id, code: nextProjectCode(), name:"Proiect nou", clientId:null, deadline:null, cuExpiry:null, driveLink:"", clientDriveLink:"", notes:"", priority:false, documents:[], contractValue:null, paidAmount:0, status, lastChange:null, approved:false};
     projects.push(p);
     activeTab = "toate";
     flashProjectId = id;
@@ -1554,9 +1619,9 @@
   function statusLabel(s){ return s==="done" ? "Finalizat" : s==="na" ? "Nu se aplică" : "Neînceput"; }
   document.getElementById("btnBackup").addEventListener("click", ()=>{
     if(typeof XLSX === "undefined"){ showToast("Exportul nu s-a putut încărca — verifică rețeaua"); return; }
-    const projHeader = ["Cod","Proiect","Prioritar","Client","Termen", ...phases.map(p=>p.name), "Stadiu", "Link Drive intern", "Link Drive client", "Valoare contract (RON)", "Achitat (RON)", "Achitat (%)", "Notițe"];
+    const projHeader = ["Cod","Proiect","Prioritar","Client","Termen","Exp. Certificat Urbanism", ...phases.map(p=>p.name), "Stadiu", "Link Drive intern", "Link Drive client", "Valoare contract (RON)", "Achitat (RON)", "Achitat (%)", "Notițe"];
     const projRows = projects.map(p=>[
-      p.code, p.name, p.priority ? "Da" : "Nu", (client(p.clientId)||{}).name || "", fmtDate(p.deadline),
+      p.code, p.name, p.priority ? "Da" : "Nu", (client(p.clientId)||{}).name || "", fmtDate(p.deadline), fmtDate(p.cuExpiry),
       ...phases.map(ph=>statusLabel(p.status[ph.id]||"empty")),
       isFinished(p) ? "Terminat" : "Activ",
       p.driveLink || "",
